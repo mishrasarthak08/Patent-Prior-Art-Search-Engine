@@ -8,6 +8,10 @@ from backend.app.retrieval.fusion import reciprocal_rank_fusion
 from backend.app.retrieval.reranker import CohereReranker
 from backend.app.retrieval.explain import ExplanationGenerator
 
+from backend.app.logger import get_logger
+
+logger = get_logger(__name__)
+
 class GraphState(TypedDict):
     raw_claim: str
     decomposed_claim: DecomposedClaim
@@ -24,16 +28,20 @@ reranker = CohereReranker()
 explanation_generator = ExplanationGenerator()
 
 def decompose_and_hyde(state: GraphState):
+    logger.info("Graph node: decompose_and_hyde")
     claim = qu_pipeline.process_claim(state["raw_claim"])
     return {"decomposed_claim": claim}
 
 def retrieve_bm25(state: GraphState):
+    logger.info("Graph node: retrieve_bm25")
     # Combine claim elements text for full BM25 search
     query = " ".join([e.text for e in state["decomposed_claim"].elements])
     results = bm25_retriever.search(query, k=50)
+    logger.info(f"BM25 found {len(results)} candidates")
     return {"bm25_results": results}
 
 def retrieve_dense(state: GraphState):
+    logger.info("Graph node: retrieve_dense")
     results = []
     # Per-element dense retrieval with HyDE
     for element in state["decomposed_claim"].elements:
@@ -44,19 +52,24 @@ def retrieve_dense(state: GraphState):
             if element.element_id not in res.matched_elements:
                 res.matched_elements.append(element.element_id)
         results.extend(element_results)
+    logger.info(f"Dense found {len(results)} candidates across elements")
     return {"dense_results": results}
 
 def fuse(state: GraphState):
+    logger.info("Graph node: fuse")
     fused = reciprocal_rank_fusion([state.get("bm25_results", []), state.get("dense_results", [])])
+    logger.info(f"Fusion resulted in {len(fused)} unique candidates")
     return {"fused_results": fused}
 
 def rerank(state: GraphState):
+    logger.info("Graph node: rerank")
     # Rerank against the original raw claim
     query = state["raw_claim"]
     reranked = reranker.rerank(query, state["fused_results"], top_n=10)
     return {"final_results": reranked}
 
 def explain(state: GraphState):
+    logger.info("Graph node: explain")
     final_docs = state["final_results"]
     query_claim = state["decomposed_claim"]
     

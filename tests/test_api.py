@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
-from backend.app.main import app
+from backend.app.main import app, limiter
 from backend.app.schemas import DISCLAIMER_TEXT
 
 client = TestClient(app)
@@ -31,6 +31,7 @@ def test_ready_endpoint_failure(mock_get):
 
 @patch("backend.app.main.retrieval_graph")
 def test_search_disclaimer_presence(mock_graph):
+    limiter.reset()
     mock_graph.invoke.return_value = {
         "decomposed_claim": {"raw_claim_text": "test", "elements": []},
         "bm25_results": [],
@@ -39,7 +40,8 @@ def test_search_disclaimer_presence(mock_graph):
         "final_results": []
     }
     
-    response = client.post("/search", json={"raw_claim": "A valid claim test."})
+    headers = {"X-API-Key": "dev_key"}
+    response = client.post("/search", json={"raw_claim": "A valid claim test."}, headers=headers)
     assert response.status_code == 200
     data = response.json()
     assert "disclaimer" in data

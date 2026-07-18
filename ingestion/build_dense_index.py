@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from langchain_openai import OpenAIEmbeddings
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, VectorParams, PointStruct
-from uuid import uuid4
+import uuid
 
 # Load environment variables (e.g. OPENAI_API_KEY)
 load_dotenv()
@@ -27,16 +27,12 @@ def build_dense_index(parquet_path: str = 'data/corpus/corpus.parquet'):
     print("Initializing OpenAI embeddings...")
     embeddings_model = OpenAIEmbeddings(model="text-embedding-3-small")
     
-    # Recreate collection
-    try:
-        client.delete_collection(collection_name=collection_name)
-    except Exception:
-        pass
-        
-    client.create_collection(
-        collection_name=collection_name,
-        vectors_config=VectorParams(size=1536, distance=Distance.COSINE),
-    )
+    # Create collection only if it doesn't exist
+    if not client.collection_exists(collection_name=collection_name):
+        client.create_collection(
+            collection_name=collection_name,
+            vectors_config=VectorParams(size=1536, distance=Distance.COSINE),
+        )
     
     points = []
     
@@ -55,6 +51,7 @@ def build_dense_index(parquet_path: str = 'data/corpus/corpus.parquet'):
                     "metadata": {
                         "doc_id": doc_id,
                         "type": "abstract",
+                        "claim_index": 0,
                         "cpc_codes": cpc_codes,
                         "publication_date": pub_date
                     }
@@ -89,10 +86,10 @@ def build_dense_index(parquet_path: str = 'data/corpus/corpus.parquet'):
         # Embed
         vectors = embeddings_model.embed_documents(texts)
         
-        # Prepare points
+        # Prepare points with deterministic UUIDs
         qdrant_points = [
             PointStruct(
-                id=str(uuid4()),
+                id=str(uuid.uuid5(uuid.NAMESPACE_DNS, f"{metadata['doc_id']}_{metadata['type']}_{metadata['claim_index']}")),
                 vector=vector,
                 payload={"text": text, **metadata}
             )

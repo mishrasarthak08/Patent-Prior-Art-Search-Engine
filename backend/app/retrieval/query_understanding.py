@@ -1,0 +1,94 @@
+import os
+import logging
+from typing import List
+from pydantic import ValidationError
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import PydanticOutputParser
+from backend.app.schemas import DecomposedClaim, ClaimElement
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Prompt for decomposition
+DECOMPOSITION_PROMPT = """
+You are an expert patent attorney. Your task is to decompose a raw patent claim into its atomic technical limitations.
+Break down the claim into logical, searchable elements.
+
+Raw Claim Text:
+{raw_claim}
+
+Provide the output strictly matching the JSON schema. Ensure each element has a unique element_id.
+"""
+
+HYDE_PROMPT = """
+You are a technical expert. I will provide you with a specific element from a patent claim.
+Your task is to write a hypothetical passage from a prior-art document that would satisfy or anticipate this element.
+Write it exactly as it would appear in a real engineering document or patent description.
+
+Claim Element: {element_text}
+Element Type: {element_type}
+
+Hypothetical Prior Art Passage:
+"""
+
+class QueryUnderstandingPipeline:
+    def __init__(self):
+        # Using OpenAI as default. The prompt structure expects structured JSON fallback or native function calling.
+        self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+        self.hyde_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7) 
+        
+        self.decomposition_parser = PydanticOutputParser(pydantic_object=DecomposedClaim)
+        self.decomposition_prompt = ChatPromptTemplate.from_messages([
+            ("system", DECOMPOSITION_PROMPT),
+            ("user", "Please format your output according to the schema:\n{format_instructions}")
+        ])
+        
+    def decompose_claim(self, raw_claim: str, max_retries: int = 1) -> DecomposedClaim:
+        """Decomposes a raw claim with retry logic for schema validation (fails safely)."""
+        # Using .with_structured_output if model supports it, but PydanticOutputParser is more universally compatible
+        chain = self.decomposition_prompt | self.llm | self.decomposition_parser
+        
+        for attempt in range(max_retries + 1):
+            try:
+                result = chain.invoke({
+                    "raw_claim": raw_claim,
+                    "format_instructions": self.decomposition_parser.get_format_instructions()
+                })
+                return result
+            except ValidationError as e:
+                logger.warning(f"Validation error on attempt {attempt}: {e}")
+                if attempt == max_retries:
+                    logger.error("Max retries reached for claim decomposition.")
+                    raise
+            except Exception as e:
+                logger.warning(f"Error during decomposition: {e}")
+                if attempt == max_retries:
+                    raise
+
+    def generate_hyde_for_element(self, element: ClaimElement) -> str:
+        prompt = ChatPromptTemplate.from_template(HYDE_PROMPT)
+        chain = prompt | self.hyde_llm
+        response = chain.invoke({
+            "element_text": element.text,
+            "element_type": element.element_type
+        })
+        return response.content
+
+    def process_claim(self, raw_claim: str) -> DecomposedClaim:
+        logger.info("Starting claim decomposition...")
+        # Step 1: Decompose
+        decomposed = self.decompose_claim(raw_claim)
+        
+        logger.info(f"Decomposed into {len(decomposed.elements)} elements. Generating HyDE passages...")
+        # Step 2: Generate HyDE passages
+        # DECISION LOG: Element-level HyDE vs Whole-claim HyDE.
+        # We choose Element-level HyDE here because it allows for finer-grained dense retrieval
+        # on specific technical limitations, avoiding the "lost in the middle" problem of long
+        # whole-claim passages. This costs more LLM calls but improves recall on paraphrased elements.
+        for element in decomposed.elements:
+            hyde_passage = self.generate_hyde_for_element(element)
+            element.hyde_passage = hyde_passage
+            
+        logger.info("Query understanding complete.")
+        return decomposed

@@ -1,6 +1,7 @@
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from pydantic import ValidationError
+from langchain_core.messages import AIMessage
 from backend.app.retrieval.query_understanding import QueryUnderstandingPipeline
 from backend.app.schemas import DecomposedClaim, ClaimElement
 
@@ -21,10 +22,9 @@ def test_claim_decomposition_success(pipeline):
         ]
     }
     '''
-    mock_msg = MagicMock()
-    mock_msg.content = valid_json
+    mock_msg = AIMessage(content=valid_json)
 
-    with patch.object(pipeline.llm, 'invoke', return_value=mock_msg):
+    with patch('backend.app.retrieval.query_understanding.ChatOpenAI.invoke', return_value=mock_msg):
         result = pipeline.decompose_claim("A device comprising a processor, a memory, and a battery.")
         assert isinstance(result, DecomposedClaim)
         assert len(result.elements) == 3
@@ -32,8 +32,7 @@ def test_claim_decomposition_success(pipeline):
 
 def test_claim_decomposition_retry_on_malformed(pipeline):
     # Mock first response as malformed JSON, second response as valid JSON
-    malformed_msg = MagicMock()
-    malformed_msg.content = '{"missing_fields": true}'
+    malformed_msg = AIMessage(content='{"missing_fields": true}')
     
     valid_json = '''
     {
@@ -43,19 +42,19 @@ def test_claim_decomposition_retry_on_malformed(pipeline):
         ]
     }
     '''
-    valid_msg = MagicMock()
-    valid_msg.content = valid_json
+    valid_msg = AIMessage(content=valid_json)
 
-    with patch.object(pipeline.llm, 'invoke', side_effect=[malformed_msg, valid_msg]) as mock_invoke:
+    with patch('backend.app.retrieval.query_understanding.ChatOpenAI.invoke', side_effect=[malformed_msg, valid_msg]) as mock_invoke:
         result = pipeline.decompose_claim("test claim", max_retries=1)
         assert mock_invoke.call_count == 2
         assert len(result.elements) == 1
 
+from langchain_core.exceptions import OutputParserException
+
 def test_claim_decomposition_fails_safely_after_max_retries(pipeline):
-    malformed_msg = MagicMock()
-    malformed_msg.content = '{"missing_fields": true}'
+    malformed_msg = AIMessage(content='{"missing_fields": true}')
     
-    with patch.object(pipeline.llm, 'invoke', return_value=malformed_msg) as mock_invoke:
-        with pytest.raises(ValidationError):
+    with patch('backend.app.retrieval.query_understanding.ChatOpenAI.invoke', return_value=malformed_msg) as mock_invoke:
+        with pytest.raises(OutputParserException):
             pipeline.decompose_claim("test claim", max_retries=1)
         assert mock_invoke.call_count == 2

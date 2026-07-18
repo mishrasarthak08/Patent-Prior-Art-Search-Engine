@@ -5,7 +5,7 @@ from fastapi import FastAPI, HTTPException, Request, Depends, Security
 from fastapi.security.api_key import APIKeyHeader
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from backend.app.schemas import PriorArtSearchResponse, DecomposedClaim, DISCLAIMER_TEXT
+from backend.app.schemas import PriorArtSearchResponse, DISCLAIMER_TEXT
 from backend.app.retrieval.graph import retrieval_graph
 from asgi_correlation_id import CorrelationIdMiddleware
 from backend.app.logger import get_logger
@@ -20,7 +20,7 @@ limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(title="Patent Prior-Art Search Engine API")
 
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore
 
 app.add_middleware(CorrelationIdMiddleware)
 

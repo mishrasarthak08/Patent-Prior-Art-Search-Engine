@@ -9,8 +9,8 @@ class DenseRetriever:
         self.collection_name = collection_name
         qdrant_host = os.getenv("QDRANT_HOST", "localhost")
         qdrant_port = int(os.getenv("QDRANT_PORT", "6333"))
-        self.client = QdrantClient(host=qdrant_host, port=qdrant_port, timeout=5.0)
-        self.embeddings = OpenAIEmbeddings(model="text-embedding-3-small", request_timeout=10.0)
+        self.client = QdrantClient(host=qdrant_host, port=qdrant_port, timeout=5)
+        self.embeddings = OpenAIEmbeddings(model="text-embedding-3-small", timeout=10)
 
     def search(self, query: str, k: int, filters: Optional[Dict] = None) -> List[RetrievedDocument]:
         # Embed query

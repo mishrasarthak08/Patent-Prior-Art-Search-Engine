@@ -1,4 +1,3 @@
-import pytest
 from unittest.mock import MagicMock
 from backend.app.schemas import RetrievedDocument
 from backend.app.retrieval.fusion import reciprocal_rank_fusion

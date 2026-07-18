@@ -1,4 +1,4 @@
-from typing import Annotated, TypedDict, List
+from typing import TypedDict, List
 from langgraph.graph import StateGraph, START, END
 from backend.app.schemas import DecomposedClaim, RetrievedDocument
 from backend.app.retrieval.query_understanding import QueryUnderstandingPipeline

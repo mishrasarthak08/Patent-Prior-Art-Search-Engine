@@ -22,3 +22,6 @@ slowapi
 asgi-correlation-id
 python-json-logger
 tenacity
+ruff
+mypy
+pip-audit

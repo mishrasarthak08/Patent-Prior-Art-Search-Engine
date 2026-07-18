@@ -2,7 +2,7 @@ import os
 import json
 import pandas as pd
 from google.cloud import bigquery
-from typing import List, Optional
+from typing import List
 from pydantic import BaseModel
 
 # Defines the canonical PatentDocument model

@@ -60,11 +60,13 @@ class QueryUnderstandingPipeline:
                 logger.warning(f"Validation error on attempt {attempt}: {e}")
                 if attempt == max_retries:
                     logger.error("Max retries reached for claim decomposition.")
-                    raise
+                    return DecomposedClaim(raw_claim_text=raw_claim, elements=[])
             except Exception as e:
                 logger.warning(f"Error during decomposition: {e}")
                 if attempt == max_retries:
                     raise
+        
+        return DecomposedClaim(raw_claim_text=raw_claim, elements=[])
 
     def generate_hyde_for_element(self, element: ClaimElement) -> str:
         prompt = ChatPromptTemplate.from_template(HYDE_PROMPT)

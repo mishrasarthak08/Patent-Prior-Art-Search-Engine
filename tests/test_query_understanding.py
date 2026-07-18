@@ -1,9 +1,9 @@
 import pytest
 from unittest.mock import patch
-from pydantic import ValidationError
 from langchain_core.messages import AIMessage
 from backend.app.retrieval.query_understanding import QueryUnderstandingPipeline
-from backend.app.schemas import DecomposedClaim, ClaimElement
+from backend.app.schemas import DecomposedClaim
+from langchain_core.exceptions import OutputParserException
 
 @pytest.fixture
 def pipeline():
@@ -49,7 +49,6 @@ def test_claim_decomposition_retry_on_malformed(pipeline):
         assert mock_invoke.call_count == 2
         assert len(result.elements) == 1
 
-from langchain_core.exceptions import OutputParserException
 
 def test_claim_decomposition_fails_safely_after_max_retries(pipeline):
     malformed_msg = AIMessage(content='{"missing_fields": true}')

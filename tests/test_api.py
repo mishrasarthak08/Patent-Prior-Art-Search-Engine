@@ -29,9 +29,9 @@ def test_ready_endpoint_failure(mock_get):
     response = client.get("/ready")
     assert response.status_code == 503
 
-@patch("backend.app.main.retrieval_graph.invoke")
-def test_search_disclaimer_presence(mock_invoke):
-    mock_invoke.return_value = {
+@patch("backend.app.main.retrieval_graph")
+def test_search_disclaimer_presence(mock_graph):
+    mock_graph.invoke.return_value = {
         "decomposed_claim": {"raw_claim_text": "test", "elements": []},
         "bm25_results": [],
         "dense_results": [],

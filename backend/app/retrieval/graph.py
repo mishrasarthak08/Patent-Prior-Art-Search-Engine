@@ -77,8 +77,7 @@ def build_graph():
     workflow.add_node("explain", explain)
     
     workflow.add_edge(START, "decompose")
-    workflow.add_edge("decompose", "retrieve_bm25")
-    workflow.add_edge("decompose", "retrieve_dense")
+    workflow.add_conditional_edges("decompose", lambda _: ["retrieve_bm25", "retrieve_dense"])
     workflow.add_edge("retrieve_bm25", "fuse")
     workflow.add_edge("retrieve_dense", "fuse")
     workflow.add_edge("fuse", "rerank")

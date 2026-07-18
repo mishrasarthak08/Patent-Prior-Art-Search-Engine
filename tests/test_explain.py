@@ -1,5 +1,6 @@
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
+from langchain_core.messages import AIMessage
 from backend.app.retrieval.explain import ExplanationGenerator
 from backend.app.schemas import RetrievedDocument, DecomposedClaim, ClaimElement
 
@@ -21,9 +22,8 @@ def test_explanation_generation_success():
         elements=[ClaimElement(element_id="e1", text="a processor", element_type="structural")]
     )
     
-    mock_msg = MagicMock()
-    mock_msg.content = "This document matches 'a processor' exactly as seen in the snippet."
-    
-    with patch.object(generator.chain, 'invoke', return_value=mock_msg):
+    mock_msg = AIMessage(content="This document matches 'a processor' exactly as seen in the snippet.")
+
+    with patch('backend.app.retrieval.explain.ChatOpenAI.invoke', return_value=mock_msg):
         result = generator.explain(doc, query_claim=claim)
         assert result == mock_msg.content

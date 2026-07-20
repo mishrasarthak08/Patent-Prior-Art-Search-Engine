@@ -1,7 +1,7 @@
 import os
 from typing import List, Optional, Dict
 from qdrant_client import QdrantClient
-from langchain_openai import OpenAIEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from backend.app.schemas import RetrievedDocument
 
 class DenseRetriever:
@@ -10,7 +10,7 @@ class DenseRetriever:
         qdrant_host = os.getenv("QDRANT_HOST", "localhost")
         qdrant_port = int(os.getenv("QDRANT_PORT", "6333"))
         self.client = QdrantClient(host=qdrant_host, port=qdrant_port, timeout=5)
-        self.embeddings = OpenAIEmbeddings(model="text-embedding-3-small", timeout=10)
+        self.embeddings = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004", task_type="retrieval_query")  # type: ignore
 
     def search(self, query: str, k: int, filters: Optional[Dict] = None) -> List[RetrievedDocument]:
         # Embed query

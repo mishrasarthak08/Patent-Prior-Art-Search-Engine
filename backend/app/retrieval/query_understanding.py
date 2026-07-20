@@ -2,7 +2,7 @@ import os
 import logging
 from typing import List
 from pydantic import ValidationError
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from backend.app.schemas import DecomposedClaim, ClaimElement
@@ -34,9 +34,9 @@ Hypothetical Prior Art Passage:
 
 class QueryUnderstandingPipeline:
     def __init__(self):
-        # Using OpenAI as default. The prompt structure expects structured JSON fallback or native function calling.
-        self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, request_timeout=15.0)
-        self.hyde_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7, request_timeout=10.0) 
+        # Using Gemini. The prompt structure expects structured JSON fallback or native function calling.
+        self.llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0, request_timeout=15.0)
+        self.hyde_llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.7, request_timeout=10.0) 
         
         self.decomposition_parser = PydanticOutputParser(pydantic_object=DecomposedClaim)
         self.decomposition_prompt = ChatPromptTemplate.from_messages([

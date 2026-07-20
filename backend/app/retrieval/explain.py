@@ -1,5 +1,5 @@
 import logging
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from backend.app.schemas import RetrievedDocument, DecomposedClaim
 
@@ -28,7 +28,7 @@ Provide a short, 1-2 sentence explanation:
 
 class ExplanationGenerator:
     def __init__(self):
-        self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+        self.llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0)
         self.prompt = ChatPromptTemplate.from_template(EXPLANATION_PROMPT)
         self.chain = self.prompt | self.llm
         

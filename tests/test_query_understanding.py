@@ -24,7 +24,7 @@ def test_claim_decomposition_success(pipeline):
     '''
     mock_msg = AIMessage(content=valid_json)
 
-    with patch('backend.app.retrieval.query_understanding.ChatOpenAI.invoke', return_value=mock_msg):
+    with patch('backend.app.retrieval.query_understanding.ChatGoogleGenerativeAI.invoke', return_value=mock_msg):
         result = pipeline.decompose_claim("A device comprising a processor, a memory, and a battery.")
         assert isinstance(result, DecomposedClaim)
         assert len(result.elements) == 3
@@ -44,7 +44,7 @@ def test_claim_decomposition_retry_on_malformed(pipeline):
     '''
     valid_msg = AIMessage(content=valid_json)
 
-    with patch('backend.app.retrieval.query_understanding.ChatOpenAI.invoke', side_effect=[malformed_msg, valid_msg]) as mock_invoke:
+    with patch('backend.app.retrieval.query_understanding.ChatGoogleGenerativeAI.invoke', side_effect=[malformed_msg, valid_msg]) as mock_invoke:
         result = pipeline.decompose_claim("test claim", max_retries=1)
         assert mock_invoke.call_count == 2
         assert len(result.elements) == 1
@@ -53,7 +53,7 @@ def test_claim_decomposition_retry_on_malformed(pipeline):
 def test_claim_decomposition_fails_safely_after_max_retries(pipeline):
     malformed_msg = AIMessage(content='{"missing_fields": true}')
     
-    with patch('backend.app.retrieval.query_understanding.ChatOpenAI.invoke', return_value=malformed_msg) as mock_invoke:
+    with patch('backend.app.retrieval.query_understanding.ChatGoogleGenerativeAI.invoke', return_value=malformed_msg) as mock_invoke:
         with pytest.raises(OutputParserException):
             pipeline.decompose_claim("test claim", max_retries=1)
         assert mock_invoke.call_count == 2

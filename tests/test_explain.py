@@ -23,6 +23,6 @@ def test_explanation_generation_success():
     
     mock_msg = AIMessage(content="This document matches 'a processor' exactly as seen in the snippet.")
 
-    with patch('backend.app.retrieval.explain.ChatOpenAI.invoke', return_value=mock_msg):
+    with patch('backend.app.retrieval.explain.ChatGoogleGenerativeAI.invoke', return_value=mock_msg):
         result = generator.explain(doc, query_claim=claim)
         assert result == mock_msg.content

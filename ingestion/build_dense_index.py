@@ -1,12 +1,12 @@
 import os
 import pandas as pd
 from dotenv import load_dotenv
-from langchain_openai import OpenAIEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, VectorParams, PointStruct
 import uuid
 
-# Load environment variables (e.g. OPENAI_API_KEY)
+# Load environment variables (e.g. GOOGLE_API_KEY)
 load_dotenv()
 
 def build_dense_index(parquet_path: str = 'data/corpus/corpus.parquet'):
@@ -24,15 +24,18 @@ def build_dense_index(parquet_path: str = 'data/corpus/corpus.parquet'):
     collection_name = "patent_claims"
     
     # Initialize Embeddings
-    print("Initializing OpenAI embeddings...")
-    embeddings_model = OpenAIEmbeddings(model="text-embedding-3-small")
+    print("Initializing Gemini embeddings...")
+    embeddings_model = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004", task_type="retrieval_document")
     
-    # Create collection only if it doesn't exist
-    if not client.collection_exists(collection_name=collection_name):
-        client.create_collection(
-            collection_name=collection_name,
-            vectors_config=VectorParams(size=1536, distance=Distance.COSINE),
-        )
+    # We must recreate the collection because Gemini uses 768 dimensions instead of OpenAI's 1536
+    if client.collection_exists(collection_name=collection_name):
+        print(f"Deleting existing collection {collection_name} to resize for Gemini...")
+        client.delete_collection(collection_name=collection_name)
+        
+    client.create_collection(
+        collection_name=collection_name,
+        vectors_config=VectorParams(size=768, distance=Distance.COSINE),
+    )
     
     points = []
     

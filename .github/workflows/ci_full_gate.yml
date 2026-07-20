@@ -67,7 +67,7 @@ jobs:
         pip install -r requirements.txt
     - name: Run Pytest
       env:
-        OPENAI_API_KEY: "dummy"
+        GOOGLE_API_KEY: "dummy"
         QDRANT_HOST: "localhost"
         QDRANT_PORT: 6333
         API_KEY: "dev_key"
@@ -81,7 +81,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: Build and run Docker compose
       run: |
-        echo "OPENAI_API_KEY=dummy" > .env
+        echo "GOOGLE_API_KEY=dummy" > .env
         echo "API_KEY=dev_key" >> .env
         docker compose build
         docker compose up -d

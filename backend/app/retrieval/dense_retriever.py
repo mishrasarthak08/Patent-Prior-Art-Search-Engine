@@ -18,8 +18,19 @@ class DenseRetriever:
     def search(
         self, query: str, k: int, filters: Optional[Dict] = None
     ) -> List[RetrievedDocument]:
+        import logging
+
+        logger = logging.getLogger(__name__)
+
         # Embed query
-        query_vector = self.embeddings.embed_query(query)
+        try:
+            query_vector = self.embeddings.embed_query(query)
+        except Exception as e:
+            logger.error(
+                "Embedding generation failed (e.g., quota or invalid key): %s. Falling back to empty dense results.",
+                e,
+            )
+            return []
 
         # We can add Qdrant filters based on CPC/Date here if passed
         search_result = self.client.search(

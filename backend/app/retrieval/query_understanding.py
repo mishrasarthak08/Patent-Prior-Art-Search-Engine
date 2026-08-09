@@ -1,9 +1,11 @@
 import logging
-from pydantic import ValidationError
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.prompts import ChatPromptTemplate
+
 from langchain_core.output_parsers import PydanticOutputParser
-from backend.app.schemas import DecomposedClaim, ClaimElement
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_google_genai import ChatGoogleGenerativeAI
+from pydantic import ValidationError
+
+from backend.app.schemas import ClaimElement, DecomposedClaim
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

@@ -1,8 +1,9 @@
-import os
 import json
+import os
+from typing import List
+
 import pandas as pd
 from google.cloud import bigquery
-from typing import List
 from pydantic import BaseModel
 
 

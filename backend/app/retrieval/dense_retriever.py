@@ -1,7 +1,9 @@
 import os
-from typing import List, Optional, Dict
-from qdrant_client import QdrantClient
+from typing import Dict, List, Optional
+
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from qdrant_client import QdrantClient
+
 from backend.app.schemas import RetrievedDocument
 
 

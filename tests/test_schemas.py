@@ -1,8 +1,8 @@
 from backend.app.schemas import (
     ClaimElement,
     DecomposedClaim,
-    RetrievedDocument,
     PriorArtSearchResponse,
+    RetrievedDocument,
 )
 
 

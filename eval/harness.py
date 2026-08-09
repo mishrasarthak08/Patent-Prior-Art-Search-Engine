@@ -1,11 +1,12 @@
 import logging
 from typing import Dict, List
-from eval.metrics import precision_at_k, recall_at_k, mrr, ndcg_at_k
-from backend.app.retrieval.query_understanding import QueryUnderstandingPipeline
+
 from backend.app.retrieval.bm25_retriever import BM25Retriever
 from backend.app.retrieval.dense_retriever import HydeDenseRetriever
 from backend.app.retrieval.fusion import reciprocal_rank_fusion
+from backend.app.retrieval.query_understanding import QueryUnderstandingPipeline
 from backend.app.retrieval.reranker import CohereReranker
+from eval.metrics import mrr, ndcg_at_k, precision_at_k, recall_at_k
 
 logger = logging.getLogger(__name__)
 

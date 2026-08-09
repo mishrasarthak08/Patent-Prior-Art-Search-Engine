@@ -1,4 +1,5 @@
-from typing import Protocol, List, Optional, Dict
+from typing import Dict, List, Optional, Protocol
+
 from backend.app.schemas import RetrievedDocument
 
 

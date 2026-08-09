@@ -1,7 +1,8 @@
 from unittest.mock import MagicMock
-from backend.app.schemas import RetrievedDocument
+
 from backend.app.retrieval.fusion import reciprocal_rank_fusion
 from backend.app.retrieval.reranker import CohereReranker
+from backend.app.schemas import RetrievedDocument
 
 
 def test_fusion_recovers_missing_documents():

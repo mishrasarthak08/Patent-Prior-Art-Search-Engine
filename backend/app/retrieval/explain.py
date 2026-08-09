@@ -1,7 +1,9 @@
 import logging
-from langchain_google_genai import ChatGoogleGenerativeAI
+
 from langchain_core.prompts import ChatPromptTemplate
-from backend.app.schemas import RetrievedDocument, DecomposedClaim
+from langchain_google_genai import ChatGoogleGenerativeAI
+
+from backend.app.schemas import DecomposedClaim, RetrievedDocument
 
 logger = logging.getLogger(__name__)
 

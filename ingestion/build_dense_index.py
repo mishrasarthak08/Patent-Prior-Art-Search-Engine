@@ -1,10 +1,11 @@
 import os
+import uuid
+
 import pandas as pd
 from dotenv import load_dotenv
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from qdrant_client import QdrantClient
-from qdrant_client.http.models import Distance, VectorParams, PointStruct
-import uuid
+from qdrant_client.http.models import Distance, PointStruct, VectorParams
 
 # Load environment variables (e.g. GOOGLE_API_KEY)
 load_dotenv()

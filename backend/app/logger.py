@@ -1,5 +1,6 @@
 import logging
 import sys
+
 from asgi_correlation_id import correlation_id
 from pythonjsonlogger import jsonlogger
 

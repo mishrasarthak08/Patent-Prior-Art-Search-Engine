@@ -1,14 +1,15 @@
-from typing import TypedDict, List
-from langgraph.graph import StateGraph, START, END
-from backend.app.schemas import DecomposedClaim, RetrievedDocument
-from backend.app.retrieval.query_understanding import QueryUnderstandingPipeline
-from backend.app.retrieval.bm25_retriever import BM25Retriever
-from backend.app.retrieval.dense_retriever import HydeDenseRetriever
-from backend.app.retrieval.fusion import reciprocal_rank_fusion
-from backend.app.retrieval.reranker import CohereReranker
-from backend.app.retrieval.explain import ExplanationGenerator
+from typing import List, TypedDict
+
+from langgraph.graph import END, START, StateGraph
 
 from backend.app.logger import get_logger
+from backend.app.retrieval.bm25_retriever import BM25Retriever
+from backend.app.retrieval.dense_retriever import HydeDenseRetriever
+from backend.app.retrieval.explain import ExplanationGenerator
+from backend.app.retrieval.fusion import reciprocal_rank_fusion
+from backend.app.retrieval.query_understanding import QueryUnderstandingPipeline
+from backend.app.retrieval.reranker import CohereReranker
+from backend.app.schemas import DecomposedClaim, RetrievedDocument
 
 logger = get_logger(__name__)
 

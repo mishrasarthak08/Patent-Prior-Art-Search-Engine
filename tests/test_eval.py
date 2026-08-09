@@ -1,4 +1,4 @@
-from eval.metrics import precision_at_k, recall_at_k, mrr, ndcg_at_k
+from eval.metrics import mrr, ndcg_at_k, precision_at_k, recall_at_k
 
 
 def test_precision():

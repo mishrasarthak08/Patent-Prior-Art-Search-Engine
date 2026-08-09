@@ -1,6 +1,7 @@
 import os
 import pickle
-from typing import List, Optional, Dict
+from typing import Dict, List, Optional
+
 from backend.app.schemas import RetrievedDocument
 
 

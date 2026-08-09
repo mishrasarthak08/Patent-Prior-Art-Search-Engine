@@ -1,7 +1,9 @@
 from unittest.mock import patch
+
 from langchain_core.messages import AIMessage
+
 from backend.app.retrieval.explain import ExplanationGenerator
-from backend.app.schemas import RetrievedDocument, DecomposedClaim, ClaimElement
+from backend.app.schemas import ClaimElement, DecomposedClaim, RetrievedDocument
 
 
 def test_explanation_generation_success():

@@ -1,14 +1,16 @@
 import os
 from typing import List
+
 import cohere
 from tenacity import (
     retry,
+    retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,
-    retry_if_exception_type,
 )
-from backend.app.schemas import RetrievedDocument
+
 from backend.app.logger import get_logger
+from backend.app.schemas import RetrievedDocument
 
 logger = get_logger(__name__)
 

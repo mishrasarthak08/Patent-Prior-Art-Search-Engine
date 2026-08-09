@@ -1,6 +1,8 @@
-import pytest
 from unittest.mock import patch
+
+import pytest
 from langchain_core.messages import AIMessage
+
 from backend.app.retrieval.query_understanding import QueryUnderstandingPipeline
 from backend.app.schemas import DecomposedClaim
 

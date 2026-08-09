@@ -1,5 +1,7 @@
+from unittest.mock import MagicMock, patch
+
 from fastapi.testclient import TestClient
-from unittest.mock import patch, MagicMock
+
 from backend.app.main import app, limiter
 from backend.app.schemas import DISCLAIMER_TEXT
 

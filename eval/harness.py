@@ -63,6 +63,10 @@ class EvaluationHarness:
                 "full": calc_metrics(full_ids)
             })
             
+            # Throttle to avoid hitting Gemini Free Tier 15 RPM limit
+            import time
+            time.sleep(4)
+            
         return self._aggregate(results)
         
     def _aggregate(self, results):

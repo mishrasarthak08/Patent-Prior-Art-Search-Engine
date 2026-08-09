@@ -10,6 +10,11 @@ from backend.app.retrieval.graph import retrieval_graph
 from asgi_correlation_id import CorrelationIdMiddleware
 from backend.app.logger import get_logger
 
+import langchain
+from langchain_community.cache import SQLiteCache
+
+langchain.llm_cache = SQLiteCache(database_path=".langchain.db")
+
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded

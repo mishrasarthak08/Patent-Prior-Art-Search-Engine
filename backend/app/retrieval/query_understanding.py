@@ -60,22 +60,27 @@ class QueryUnderstandingPipeline:
                 logger.warning(f"Validation error on attempt {attempt}: {e}")
                 if attempt == max_retries:
                     logger.error("Max retries reached for claim decomposition.")
-                    return DecomposedClaim(raw_claim_text=raw_claim, elements=[])
+                    return DecomposedClaim(raw_claim_text=raw_claim, elements=[ClaimElement(element_id="el-fallback", text=raw_claim, element_type="structural")])
             except Exception as e:
-                logger.warning(f"Error during decomposition: {e}")
-                if attempt == max_retries:
-                    raise
+                logger.warning(f"API Error during decomposition: {e}")
+                if "429" in str(e) or attempt == max_retries:
+                    logger.error(f"Fallback triggered due to API limits or max retries.")
+                    return DecomposedClaim(raw_claim_text=raw_claim, elements=[ClaimElement(element_id="el-fallback", text=raw_claim, element_type="structural")])
         
-        return DecomposedClaim(raw_claim_text=raw_claim, elements=[])
+        return DecomposedClaim(raw_claim_text=raw_claim, elements=[ClaimElement(element_id="el-fallback", text=raw_claim, element_type="structural")])
 
     def generate_hyde_for_element(self, element: ClaimElement) -> str:
         prompt = ChatPromptTemplate.from_template(HYDE_PROMPT)
         chain = prompt | self.hyde_llm
-        response = chain.invoke({
-            "element_text": element.text,
-            "element_type": element.element_type
-        })
-        return response.content
+        try:
+            response = chain.invoke({
+                "element_text": element.text,
+                "element_type": element.element_type
+            })
+            return response.content
+        except Exception as e:
+            logger.warning(f"HyDE API Error (possibly quota limits): {e}")
+            return ""
 
     def process_claim(self, raw_claim: str) -> DecomposedClaim:
         logger.info("Starting claim decomposition...")

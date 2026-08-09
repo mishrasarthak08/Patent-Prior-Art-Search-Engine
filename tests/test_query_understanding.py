@@ -54,6 +54,8 @@ def test_claim_decomposition_fails_safely_after_max_retries(pipeline):
     malformed_msg = AIMessage(content='{"missing_fields": true}')
     
     with patch('backend.app.retrieval.query_understanding.ChatGoogleGenerativeAI.invoke', return_value=malformed_msg) as mock_invoke:
-        with pytest.raises(OutputParserException):
-            pipeline.decompose_claim("test claim", max_retries=1)
-        assert mock_invoke.call_count == 2
+        result = pipeline.decompose_claim("test claim", max_retries=1)
+        assert result.raw_claim_text == "test claim"
+        assert len(result.elements) == 1
+        assert result.elements[0].element_id == "el-fallback"
+    assert mock_invoke.call_count == 2

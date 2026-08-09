@@ -26,9 +26,9 @@ def main():
         print("No gold set found. Using synthetic data for smoke test...")
         queries, gold = generate_synthetic_data()
     else:
-        with open("eval/queries.json", "r") as f:
+        with open("eval/queries.json") as f:
             queries = json.load(f)
-        with open(gold_set_path, "r") as f:
+        with open(gold_set_path) as f:
             gold = json.load(f)
 
     print(

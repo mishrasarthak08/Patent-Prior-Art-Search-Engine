@@ -1,5 +1,4 @@
 import os
-from typing import Dict, List, Optional
 
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from qdrant_client import QdrantClient
@@ -18,8 +17,8 @@ class DenseRetriever:
         )  # type: ignore
 
     def search(
-        self, query: str, k: int, filters: Optional[Dict] = None
-    ) -> List[RetrievedDocument]:
+        self, query: str, k: int, filters: dict | None = None
+    ) -> list[RetrievedDocument]:
         import logging
 
         logger = logging.getLogger(__name__)
@@ -64,8 +63,8 @@ class DenseRetriever:
 
 class HydeDenseRetriever(DenseRetriever):
     def search(
-        self, query: str, k: int, filters: Optional[Dict] = None
-    ) -> List[RetrievedDocument]:
+        self, query: str, k: int, filters: dict | None = None
+    ) -> list[RetrievedDocument]:
         results = super().search(query, k, filters)
         for doc in results:
             doc.retrieval_sources = ["hyde"]

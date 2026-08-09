@@ -1,11 +1,10 @@
 import os
 import pickle
-from typing import Dict, List, Optional
 
 from backend.app.schemas import RetrievedDocument
 
 
-def tokenize_patent_text(text: str) -> List[str]:
+def tokenize_patent_text(text: str) -> list[str]:
     # Reuse the tokenization from ingestion
     if not text:
         return []
@@ -31,8 +30,8 @@ class BM25Retriever:
                 self.doc_ids = data["doc_ids"]
 
     def search(
-        self, query: str, k: int, filters: Optional[Dict] = None
-    ) -> List[RetrievedDocument]:
+        self, query: str, k: int, filters: dict | None = None
+    ) -> list[RetrievedDocument]:
         if not self.bm25_model:
             return []
 

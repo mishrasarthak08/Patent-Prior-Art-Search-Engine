@@ -125,7 +125,7 @@ def eval_latest(api_key: str = Depends(get_api_key)):
         raise HTTPException(status_code=404, detail="Eval harness results not found.")
 
     results = []
-    with open(lift_table_path, "r") as f:
+    with open(lift_table_path) as f:
         reader = csv.DictReader(f)
         for row in reader:
             results.append(row)

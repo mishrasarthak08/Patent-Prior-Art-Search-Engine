@@ -1,8 +1,7 @@
 import math
-from typing import List, Set
 
 
-def recall_at_k(retrieved_ids: List[str], gold_ids: Set[str], k: int) -> float:
+def recall_at_k(retrieved_ids: list[str], gold_ids: set[str], k: int) -> float:
     if not gold_ids:
         return 0.0
     retrieved_k = retrieved_ids[:k]
@@ -10,7 +9,7 @@ def recall_at_k(retrieved_ids: List[str], gold_ids: Set[str], k: int) -> float:
     return relevant_retrieved / len(gold_ids)
 
 
-def precision_at_k(retrieved_ids: List[str], gold_ids: Set[str], k: int) -> float:
+def precision_at_k(retrieved_ids: list[str], gold_ids: set[str], k: int) -> float:
     if k == 0:
         return 0.0
     retrieved_k = retrieved_ids[:k]
@@ -20,14 +19,14 @@ def precision_at_k(retrieved_ids: List[str], gold_ids: Set[str], k: int) -> floa
     return relevant_retrieved / len(retrieved_k)
 
 
-def mrr(retrieved_ids: List[str], gold_ids: Set[str]) -> float:
+def mrr(retrieved_ids: list[str], gold_ids: set[str]) -> float:
     for i, doc_id in enumerate(retrieved_ids):
         if doc_id in gold_ids:
             return 1.0 / (i + 1)
     return 0.0
 
 
-def dcg_at_k(retrieved_ids: List[str], gold_ids: Set[str], k: int) -> float:
+def dcg_at_k(retrieved_ids: list[str], gold_ids: set[str], k: int) -> float:
     dcg = 0.0
     for i, doc_id in enumerate(retrieved_ids[:k]):
         if doc_id in gold_ids:
@@ -35,7 +34,7 @@ def dcg_at_k(retrieved_ids: List[str], gold_ids: Set[str], k: int) -> float:
     return dcg
 
 
-def ndcg_at_k(retrieved_ids: List[str], gold_ids: Set[str], k: int) -> float:
+def ndcg_at_k(retrieved_ids: list[str], gold_ids: set[str], k: int) -> float:
     actual_dcg = dcg_at_k(retrieved_ids, gold_ids, k)
 
     # Ideal DCG (if all gold documents were ranked at the very top)

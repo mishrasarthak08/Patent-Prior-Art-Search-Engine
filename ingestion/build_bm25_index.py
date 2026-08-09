@@ -1,12 +1,11 @@
 import os
 import pickle
-from typing import List
 
 import pandas as pd
 from rank_bm25 import BM25Okapi
 
 
-def tokenize_patent_text(text: str) -> List[str]:
+def tokenize_patent_text(text: str) -> list[str]:
     """
     Patent-aware tokenization: preserves chemical formulae, patent numbers,
     and hyphenated compound terms.

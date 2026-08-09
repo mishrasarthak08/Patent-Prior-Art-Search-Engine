@@ -1,5 +1,4 @@
 import logging
-from typing import Dict, List
 
 from backend.app.retrieval.bm25_retriever import BM25Retriever
 from backend.app.retrieval.dense_retriever import HydeDenseRetriever
@@ -18,7 +17,7 @@ class EvaluationHarness:
         self.dense = HydeDenseRetriever()
         self.reranker = CohereReranker()
 
-    def evaluate(self, queries: List[Dict], gold_set: Dict[str, List[str]]):
+    def evaluate(self, queries: list[dict], gold_set: dict[str, list[str]]):
         results = []
         for q in queries:
             qid = q["query_id"]

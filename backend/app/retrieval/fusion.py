@@ -1,17 +1,16 @@
-from typing import Dict, List
 
 from backend.app.schemas import RetrievedDocument
 
 
 def reciprocal_rank_fusion(
-    lists_of_docs: List[List[RetrievedDocument]], k_rrf: int = 60
-) -> List[RetrievedDocument]:
+    lists_of_docs: list[list[RetrievedDocument]], k_rrf: int = 60
+) -> list[RetrievedDocument]:
     """
     Implements Reciprocal Rank Fusion from scratch.
     RRF_score = sum(1 / (k_rrf + rank)) across all lists.
     """
-    rrf_scores: Dict[str, float] = {}
-    doc_registry: Dict[str, RetrievedDocument] = {}
+    rrf_scores: dict[str, float] = {}
+    doc_registry: dict[str, RetrievedDocument] = {}
 
     for doc_list in lists_of_docs:
         for rank, doc in enumerate(doc_list):

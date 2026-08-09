@@ -1,6 +1,5 @@
 import json
 import os
-from typing import List
 
 import pandas as pd
 from google.cloud import bigquery
@@ -12,10 +11,10 @@ class PatentDocument(BaseModel):
     id: str
     title: str
     abstract: str
-    claims: List[str]
-    cpc_codes: List[str]
+    claims: list[str]
+    cpc_codes: list[str]
     publication_date: str
-    citations: List[str]
+    citations: list[str]
 
 
 def pull_corpus(limit: int = 5000, cpc_subclass: str = "H01M"):

@@ -1,4 +1,4 @@
-from typing import List, TypedDict
+from typing import TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
@@ -17,10 +17,10 @@ logger = get_logger(__name__)
 class GraphState(TypedDict):
     raw_claim: str
     decomposed_claim: DecomposedClaim
-    bm25_results: List[RetrievedDocument]
-    dense_results: List[RetrievedDocument]
-    fused_results: List[RetrievedDocument]
-    final_results: List[RetrievedDocument]
+    bm25_results: list[RetrievedDocument]
+    dense_results: list[RetrievedDocument]
+    fused_results: list[RetrievedDocument]
+    final_results: list[RetrievedDocument]
 
 
 # Initialize components

@@ -1,5 +1,4 @@
 import os
-from typing import List
 
 import cohere
 from tenacity import (
@@ -33,14 +32,14 @@ class CohereReranker:
         retry=retry_if_exception_type(Exception),
         reraise=True,
     )
-    def _call_rerank_api(self, query: str, docs_text: List[str], top_n: int):
+    def _call_rerank_api(self, query: str, docs_text: list[str], top_n: int):
         return self.client.rerank(
             query=query, documents=docs_text, top_n=top_n, model="rerank-english-v3.0"
         )
 
     def rerank(
-        self, query: str, candidates: List[RetrievedDocument], top_n: int
-    ) -> List[RetrievedDocument]:
+        self, query: str, candidates: list[RetrievedDocument], top_n: int
+    ) -> list[RetrievedDocument]:
         if not self.client or not candidates:
             return candidates[:top_n]
 

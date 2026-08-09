@@ -31,9 +31,7 @@ def test_api_key_auth():
 
     # Invalid API key
     headers = {"X-API-Key": "invalid_key"}
-    response = client.post(
-        "/search", json={"raw_claim": "A valid claim test."}, headers=headers
-    )
+    response = client.post("/search", json={"raw_claim": "A valid claim test."}, headers=headers)
     assert response.status_code in [401, 403]
 
 

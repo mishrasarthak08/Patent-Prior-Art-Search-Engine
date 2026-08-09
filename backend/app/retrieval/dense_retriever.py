@@ -12,13 +12,9 @@ class DenseRetriever:
         qdrant_host = os.getenv("QDRANT_HOST", "localhost")
         qdrant_port = int(os.getenv("QDRANT_PORT", "6333"))
         self.client = QdrantClient(host=qdrant_host, port=qdrant_port, timeout=5)
-        self.embeddings = GoogleGenerativeAIEmbeddings(
-            model="models/gemini-embedding-2", task_type="retrieval_query"
-        )  # type: ignore
+        self.embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-2", task_type="retrieval_query")  # type: ignore
 
-    def search(
-        self, query: str, k: int, filters: dict | None = None
-    ) -> list[RetrievedDocument]:
+    def search(self, query: str, k: int, filters: dict | None = None) -> list[RetrievedDocument]:
         import logging
 
         logger = logging.getLogger(__name__)
@@ -62,9 +58,7 @@ class DenseRetriever:
 
 
 class HydeDenseRetriever(DenseRetriever):
-    def search(
-        self, query: str, k: int, filters: dict | None = None
-    ) -> list[RetrievedDocument]:
+    def search(self, query: str, k: int, filters: dict | None = None) -> list[RetrievedDocument]:
         results = super().search(query, k, filters)
         for doc in results:
             doc.retrieval_sources = ["hyde"]

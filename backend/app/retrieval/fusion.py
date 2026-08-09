@@ -1,10 +1,7 @@
-
 from backend.app.schemas import RetrievedDocument
 
 
-def reciprocal_rank_fusion(
-    lists_of_docs: list[list[RetrievedDocument]], k_rrf: int = 60
-) -> list[RetrievedDocument]:
+def reciprocal_rank_fusion(lists_of_docs: list[list[RetrievedDocument]], k_rrf: int = 60) -> list[RetrievedDocument]:
     """
     Implements Reciprocal Rank Fusion from scratch.
     RRF_score = sum(1 / (k_rrf + rank)) across all lists.

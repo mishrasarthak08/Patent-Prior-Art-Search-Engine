@@ -29,9 +29,7 @@ class BM25Retriever:
                 self.bm25_model = data["bm25_model"]
                 self.doc_ids = data["doc_ids"]
 
-    def search(
-        self, query: str, k: int, filters: dict | None = None
-    ) -> list[RetrievedDocument]:
+    def search(self, query: str, k: int, filters: dict | None = None) -> list[RetrievedDocument]:
         if not self.bm25_model:
             return []
 
@@ -39,9 +37,7 @@ class BM25Retriever:
         scores = self.bm25_model.get_scores(tokenized_query)
 
         # Get top-k indices
-        top_k_indices = sorted(
-            range(len(scores)), key=lambda i: scores[i], reverse=True
-        )[:k]
+        top_k_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:k]
 
         results = []
         for idx in top_k_indices:

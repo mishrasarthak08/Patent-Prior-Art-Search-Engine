@@ -42,17 +42,11 @@ class ExplanationGenerator:
         # Format matched elements for prompt
         matched_element_texts = []
         for elem_id in doc.matched_elements:
-            elem = next(
-                (e for e in query_claim.elements if e.element_id == elem_id), None
-            )
+            elem = next((e for e in query_claim.elements if e.element_id == elem_id), None)
             if elem:
                 matched_element_texts.append(f"- {elem_id}: {elem.text}")
 
-        matched_str = (
-            "\n".join(matched_element_texts)
-            if matched_element_texts
-            else "None tracked"
-        )
+        matched_str = "\n".join(matched_element_texts) if matched_element_texts else "None tracked"
 
         try:
             response = self.chain.invoke(

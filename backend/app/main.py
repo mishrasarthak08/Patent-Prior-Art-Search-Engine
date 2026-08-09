@@ -53,15 +53,11 @@ class SearchRequest(BaseModel):
 
 @app.post("/search", response_model=PriorArtSearchResponse)
 @limiter.limit("5/minute")
-async def search(
-    request: Request, search_request: SearchRequest, api_key: str = Depends(get_api_key)
-):
+async def search(request: Request, search_request: SearchRequest, api_key: str = Depends(get_api_key)):
     if not search_request.raw_claim.strip():
         raise HTTPException(status_code=422, detail="Claim text empty")
 
-    logger.info(
-        "Received search request", extra={"claim_length": len(search_request.raw_claim)}
-    )
+    logger.info("Received search request", extra={"claim_length": len(search_request.raw_claim)})
     start_time = time.time()
 
     # Run graph

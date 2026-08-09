@@ -6,9 +6,7 @@ from pydantic import BaseModel, Field
 class ClaimElement(BaseModel):
     element_id: str
     text: str
-    element_type: Literal[
-        "structural", "functional", "chemical", "numeric", "method_step"
-    ]
+    element_type: Literal["structural", "functional", "chemical", "numeric", "method_step"]
     hyde_passage: str | None = None
 
 

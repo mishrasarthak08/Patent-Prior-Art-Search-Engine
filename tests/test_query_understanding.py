@@ -31,9 +31,7 @@ def test_claim_decomposition_success(pipeline):
         "backend.app.retrieval.query_understanding.ChatGoogleGenerativeAI.invoke",
         return_value=mock_msg,
     ):
-        result = pipeline.decompose_claim(
-            "A device comprising a processor, a memory, and a battery."
-        )
+        result = pipeline.decompose_claim("A device comprising a processor, a memory, and a battery.")
         assert isinstance(result, DecomposedClaim)
         assert len(result.elements) == 3
         assert result.elements[0].element_type == "structural"

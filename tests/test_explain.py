@@ -21,14 +21,10 @@ def test_explanation_generation_success():
 
     claim = DecomposedClaim(
         raw_claim_text="A device comprising a processor.",
-        elements=[
-            ClaimElement(element_id="e1", text="a processor", element_type="structural")
-        ],
+        elements=[ClaimElement(element_id="e1", text="a processor", element_type="structural")],
     )
 
-    mock_msg = AIMessage(
-        content="This document matches 'a processor' exactly as seen in the snippet."
-    )
+    mock_msg = AIMessage(content="This document matches 'a processor' exactly as seen in the snippet.")
 
     with patch(
         "backend.app.retrieval.explain.ChatGoogleGenerativeAI.invoke",

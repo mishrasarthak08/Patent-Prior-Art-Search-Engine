@@ -31,9 +31,7 @@ def main():
         with open(gold_set_path) as f:
             gold = json.load(f)
 
-    print(
-        "Running evaluation (this may take a few minutes if real LLMs are invoked)..."
-    )
+    print("Running evaluation (this may take a few minutes if real LLMs are invoked)...")
     try:
         # Throttle evaluation internally if supported or just run it
         # The underlying harness or LLM calls might still hit quota, but graceful degradation handles it.
@@ -47,9 +45,7 @@ def main():
             writer = csv.writer(f)
             writer.writerow(["System", "P@5", "R@5", "MRR", "nDCG@5"])
             for sys_name in ["baseline", "hybrid", "full"]:
-                metrics = agg_results.get(
-                    sys_name, {"P@5": 0, "R@5": 0, "MRR": 0, "nDCG@5": 0}
-                )
+                metrics = agg_results.get(sys_name, {"P@5": 0, "R@5": 0, "MRR": 0, "nDCG@5": 0})
                 writer.writerow(
                     [
                         sys_name,

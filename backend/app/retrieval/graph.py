@@ -64,9 +64,7 @@ def retrieve_dense(state: GraphState):
 
 def fuse(state: GraphState):
     logger.info("Graph node: fuse")
-    fused = reciprocal_rank_fusion(
-        [state.get("bm25_results", []), state.get("dense_results", [])]
-    )
+    fused = reciprocal_rank_fusion([state.get("bm25_results", []), state.get("dense_results", [])])
     logger.info(f"Fusion resulted in {len(fused)} unique candidates")
     return {"fused_results": fused}
 
@@ -102,9 +100,7 @@ def build_graph():
     workflow.add_node("explain", explain)
 
     workflow.add_edge(START, "decompose")
-    workflow.add_conditional_edges(
-        "decompose", lambda _: ["retrieve_bm25", "retrieve_dense"]
-    )
+    workflow.add_conditional_edges("decompose", lambda _: ["retrieve_bm25", "retrieve_dense"])
     workflow.add_edge("retrieve_bm25", "fuse")
     workflow.add_edge("retrieve_dense", "fuse")
     workflow.add_edge("fuse", "rerank")

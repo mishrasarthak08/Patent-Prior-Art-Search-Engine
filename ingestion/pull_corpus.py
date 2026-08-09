@@ -87,9 +87,7 @@ def pull_corpus(limit: int = 5000, cpc_subclass: str = "H01M"):
     os.makedirs("eval", exist_ok=True)
     with open("eval/citation_pairs.json", "w") as f:
         json.dump(citation_pairs, f, indent=2)
-    print(
-        f"Saved citation pairs for {len(citation_pairs)} patents to eval/citation_pairs.json"
-    )
+    print(f"Saved citation pairs for {len(citation_pairs)} patents to eval/citation_pairs.json")
 
 
 if __name__ == "__main__":

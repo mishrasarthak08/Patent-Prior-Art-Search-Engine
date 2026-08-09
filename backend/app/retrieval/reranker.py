@@ -19,9 +19,7 @@ class CohereReranker:
         # Graceful degradation if no API key
         api_key = os.getenv("COHERE_API_KEY")
         if not api_key or api_key == "your_cohere_api_key_here":
-            logger.warning(
-                "Valid COHERE_API_KEY not found. Reranker will be a pass-through."
-            )
+            logger.warning("Valid COHERE_API_KEY not found. Reranker will be a pass-through.")
             self.client = None
         else:
             self.client = cohere.Client(api_key=api_key, timeout=5.0)
@@ -33,13 +31,9 @@ class CohereReranker:
         reraise=True,
     )
     def _call_rerank_api(self, query: str, docs_text: list[str], top_n: int):
-        return self.client.rerank(
-            query=query, documents=docs_text, top_n=top_n, model="rerank-english-v3.0"
-        )
+        return self.client.rerank(query=query, documents=docs_text, top_n=top_n, model="rerank-english-v3.0")
 
-    def rerank(
-        self, query: str, candidates: list[RetrievedDocument], top_n: int
-    ) -> list[RetrievedDocument]:
+    def rerank(self, query: str, candidates: list[RetrievedDocument], top_n: int) -> list[RetrievedDocument]:
         if not self.client or not candidates:
             return candidates[:top_n]
 
@@ -57,7 +51,5 @@ class CohereReranker:
 
             return reranked_docs
         except Exception as e:
-            logger.warning(
-                f"Reranker failed after retries with error: {e}. Falling back to RRF ordering."
-            )
+            logger.warning(f"Reranker failed after retries with error: {e}. Falling back to RRF ordering.")
             return candidates[:top_n]

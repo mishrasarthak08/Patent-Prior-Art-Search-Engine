@@ -31,9 +31,7 @@ r = requests.post(f"{BASE_URL}/search", json={"raw_claim": ""}, headers=HEADERS)
 print(f"Status: {r.status_code} (Expected 422)")
 
 print("\nTesting /search large payload...")
-r = requests.post(
-    f"{BASE_URL}/search", json={"raw_claim": "A" * 15000}, headers=HEADERS
-)
+r = requests.post(f"{BASE_URL}/search", json={"raw_claim": "A" * 15000}, headers=HEADERS)
 print(f"Status: {r.status_code} (Expected 422)")
 
 print("\nTesting /search valid payload...")
@@ -53,9 +51,7 @@ else:
 
 print("\nTesting rate limiting... (Sending 6 requests)")
 for i in range(6):
-    r = requests.post(
-        f"{BASE_URL}/search", json={"raw_claim": f"Test claim {i}"}, headers=HEADERS
-    )
+    r = requests.post(f"{BASE_URL}/search", json={"raw_claim": f"Test claim {i}"}, headers=HEADERS)
     print(f"Req {i + 1} Status: {r.status_code}")
     if r.status_code == 429:
         print("Rate limit exceeded successfully caught.")

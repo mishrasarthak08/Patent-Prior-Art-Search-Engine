@@ -13,9 +13,7 @@ load_dotenv()
 
 def build_dense_index(parquet_path: str = "data/corpus/corpus.parquet"):
     if not os.path.exists(parquet_path):
-        raise FileNotFoundError(
-            f"Corpus file {parquet_path} not found. Run pull_corpus.py first."
-        )
+        raise FileNotFoundError(f"Corpus file {parquet_path} not found. Run pull_corpus.py first.")
 
     print(f"Loading corpus from {parquet_path}...")
     df = pd.read_parquet(parquet_path)
@@ -29,9 +27,7 @@ def build_dense_index(parquet_path: str = "data/corpus/corpus.parquet"):
 
     # Initialize Embeddings
     print("Initializing Gemini embeddings...")
-    embeddings_model = GoogleGenerativeAIEmbeddings(
-        model="models/gemini-embedding-2", task_type="retrieval_document"
-    )  # type: ignore
+    embeddings_model = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-2", task_type="retrieval_document")  # type: ignore
 
     # We must recreate the collection because Gemini uses 3072 dimensions
     if client.collection_exists(collection_name=collection_name):
@@ -112,9 +108,7 @@ def build_dense_index(parquet_path: str = "data/corpus/corpus.parquet"):
 
         # Upsert
         client.upsert(collection_name=collection_name, points=qdrant_points)
-        print(
-            f"Upserted batch {i // batch_size + 1} / {(len(points) + batch_size - 1) // batch_size}"
-        )
+        print(f"Upserted batch {i // batch_size + 1} / {(len(points) + batch_size - 1) // batch_size}")
 
     print("Dense indexing complete.")
 

@@ -46,9 +46,7 @@ def test_search_disclaimer_presence(mock_graph):
     }
 
     headers = {"X-API-Key": "dev_key"}
-    response = client.post(
-        "/search", json={"raw_claim": "A valid claim test."}, headers=headers
-    )
+    response = client.post("/search", json={"raw_claim": "A valid claim test."}, headers=headers)
     assert response.status_code == 200
     data = response.json()
     assert "disclaimer" in data

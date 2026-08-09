@@ -36,16 +36,10 @@ Hypothetical Prior Art Passage:
 class QueryUnderstandingPipeline:
     def __init__(self):
         # Using Gemini. The prompt structure expects structured JSON fallback or native function calling.
-        self.llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash", temperature=0, request_timeout=15.0
-        )
-        self.hyde_llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash", temperature=0.7, request_timeout=10.0
-        )
+        self.llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0, request_timeout=15.0)
+        self.hyde_llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.7, request_timeout=10.0)
 
-        self.decomposition_parser = PydanticOutputParser(
-            pydantic_object=DecomposedClaim
-        )
+        self.decomposition_parser = PydanticOutputParser(pydantic_object=DecomposedClaim)
         self.decomposition_prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", DECOMPOSITION_PROMPT),
@@ -101,20 +95,14 @@ class QueryUnderstandingPipeline:
 
         return DecomposedClaim(
             raw_claim_text=raw_claim,
-            elements=[
-                ClaimElement(
-                    element_id="el-fallback", text=raw_claim, element_type="structural"
-                )
-            ],
+            elements=[ClaimElement(element_id="el-fallback", text=raw_claim, element_type="structural")],
         )
 
     def generate_hyde_for_element(self, element: ClaimElement) -> str:
         prompt = ChatPromptTemplate.from_template(HYDE_PROMPT)
         chain = prompt | self.hyde_llm
         try:
-            response = chain.invoke(
-                {"element_text": element.text, "element_type": element.element_type}
-            )
+            response = chain.invoke({"element_text": element.text, "element_type": element.element_type})
             return response.content
         except Exception as e:
             logger.warning(f"HyDE API Error (possibly quota limits): {e}")
@@ -125,9 +113,7 @@ class QueryUnderstandingPipeline:
         # Step 1: Decompose
         decomposed = self.decompose_claim(raw_claim)
 
-        logger.info(
-            f"Decomposed into {len(decomposed.elements)} elements. Generating HyDE passages..."
-        )
+        logger.info(f"Decomposed into {len(decomposed.elements)} elements. Generating HyDE passages...")
         # Step 2: Generate HyDE passages
         # DECISION LOG: Element-level HyDE vs Whole-claim HyDE.
         # We choose Element-level HyDE here because it allows for finer-grained dense retrieval

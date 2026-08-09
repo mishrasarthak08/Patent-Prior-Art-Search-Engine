@@ -38,9 +38,7 @@ class EvaluationHarness:
             # Hybrid: BM25 + Dense + RRF
             dense_docs = []
             for element in decomposed.elements:
-                element_query = (
-                    element.hyde_passage if element.hyde_passage else element.text
-                )
+                element_query = element.hyde_passage if element.hyde_passage else element.text
                 dense_docs.extend(self.dense.search(element_query, k=10))
 
             hybrid_docs = reciprocal_rank_fusion([bm25_docs, dense_docs])

@@ -33,9 +33,7 @@ def build_bm25_index(
     index_path: str = "data/corpus/bm25_index.pkl",
 ):
     if not os.path.exists(parquet_path):
-        raise FileNotFoundError(
-            f"Corpus file {parquet_path} not found. Run pull_corpus.py first."
-        )
+        raise FileNotFoundError(f"Corpus file {parquet_path} not found. Run pull_corpus.py first.")
 
     print(f"Loading corpus from {parquet_path}...")
     df = pd.read_parquet(parquet_path)
@@ -46,11 +44,7 @@ def build_bm25_index(
 
     for _, row in df.iterrows():
         # Combine title, abstract, and claims for BM25 indexing
-        claims_text = (
-            " ".join(row["claims"])
-            if row["claims"] is not None and len(row["claims"]) > 0
-            else ""
-        )
+        claims_text = " ".join(row["claims"]) if row["claims"] is not None and len(row["claims"]) > 0 else ""
         text = f"{row['title']} {row['abstract']} {claims_text}"
         tokens = tokenize_patent_text(text)
         tokenized_corpus.append(tokens)

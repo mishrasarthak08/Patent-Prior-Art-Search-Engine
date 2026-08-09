@@ -8,11 +8,7 @@ services:
       - "6334:6334"
     volumes:
       - ./qdrant_data:/qdrant/storage
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6333/readyz"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
+
 
   backend:
     build: 
@@ -24,18 +20,17 @@ services:
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=6333
     env_file:
-      - .env.example
+      - .env
     depends_on:
-      qdrant:
-        condition: service_healthy
+      - qdrant
     volumes:
       - ./backend:/app/backend
       - ./eval:/app/eval
 
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #   ports:
-  #     - "3000:3000"
-  #   depends_on:
-  #     - backend
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend

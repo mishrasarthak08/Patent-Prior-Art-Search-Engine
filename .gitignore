@@ -9,6 +9,9 @@
 !package-lock.json
 !tsconfig.json
 
+# Docker Volumes
+qdrant_data/
+
 # Python
 __pycache__/
 *.py[cod]

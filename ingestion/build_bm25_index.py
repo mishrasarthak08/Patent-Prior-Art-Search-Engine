@@ -39,7 +39,7 @@ def build_bm25_index(parquet_path: str = 'data/corpus/corpus.parquet', index_pat
     
     for _, row in df.iterrows():
         # Combine title, abstract, and claims for BM25 indexing
-        claims_text = ' '.join(row['claims']) if row['claims'] else ''
+        claims_text = ' '.join(row['claims']) if row['claims'] is not None and len(row['claims']) > 0 else ''
         text = f"{row['title']} {row['abstract']} {claims_text}"
         tokens = tokenize_patent_text(text)
         tokenized_corpus.append(tokens)

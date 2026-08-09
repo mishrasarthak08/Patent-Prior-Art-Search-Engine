@@ -35,8 +35,8 @@ Hypothetical Prior Art Passage:
 class QueryUnderstandingPipeline:
     def __init__(self):
         # Using Gemini. The prompt structure expects structured JSON fallback or native function calling.
-        self.llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0, request_timeout=15.0)
-        self.hyde_llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.7, request_timeout=10.0) 
+        self.llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0, request_timeout=15.0)
+        self.hyde_llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.7, request_timeout=10.0) 
         
         self.decomposition_parser = PydanticOutputParser(pydantic_object=DecomposedClaim)
         self.decomposition_prompt = ChatPromptTemplate.from_messages([

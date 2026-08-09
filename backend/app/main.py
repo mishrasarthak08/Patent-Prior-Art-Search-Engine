@@ -100,5 +100,14 @@ def ready():
 
 @app.get("/eval/latest")
 def eval_latest(api_key: str = Depends(get_api_key)):
-    # Stub for Phase 5 lift table
-    return {"message": "Eval harness not yet built."}
+    import csv
+    lift_table_path = "eval/results/lift_table.csv"
+    if not os.path.exists(lift_table_path):
+        raise HTTPException(status_code=404, detail="Eval harness results not found.")
+    
+    results = []
+    with open(lift_table_path, "r") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            results.append(row)
+    return {"metrics": results}

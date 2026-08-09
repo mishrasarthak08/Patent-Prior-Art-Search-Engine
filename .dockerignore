@@ -1,0 +1,8 @@
+node_modules/
+.next/
+qdrant_data/
+.venv/
+__pycache__/
+*.pyc
+eval/results/
+.git/

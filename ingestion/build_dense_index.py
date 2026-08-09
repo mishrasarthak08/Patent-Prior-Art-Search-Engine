@@ -25,16 +25,16 @@ def build_dense_index(parquet_path: str = 'data/corpus/corpus.parquet'):
     
     # Initialize Embeddings
     print("Initializing Gemini embeddings...")
-    embeddings_model = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004", task_type="retrieval_document")
+    embeddings_model = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-2", task_type="retrieval_document")  # type: ignore
     
-    # We must recreate the collection because Gemini uses 768 dimensions instead of OpenAI's 1536
+    # We must recreate the collection because Gemini uses 3072 dimensions
     if client.collection_exists(collection_name=collection_name):
         print(f"Deleting existing collection {collection_name} to resize for Gemini...")
         client.delete_collection(collection_name=collection_name)
         
     client.create_collection(
         collection_name=collection_name,
-        vectors_config=VectorParams(size=768, distance=Distance.COSINE),
+        vectors_config=VectorParams(size=3072, distance=Distance.COSINE),
     )
     
     points = []
@@ -62,7 +62,7 @@ def build_dense_index(parquet_path: str = 'data/corpus/corpus.parquet'):
             )
             
         # Claims
-        if row['claims']:
+        if row['claims'] is not None and len(row['claims']) > 0:
             for i, claim in enumerate(row['claims']):
                 points.append(
                     {

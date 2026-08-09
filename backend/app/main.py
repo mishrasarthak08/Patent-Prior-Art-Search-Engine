@@ -90,6 +90,11 @@ async def search(request: Request, search_request: SearchRequest, api_key: str =
     )
 
 
+@app.get("/")
+def root():
+    return {"status": "ok"}
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}

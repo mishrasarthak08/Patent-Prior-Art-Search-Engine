@@ -97,11 +97,11 @@ npm run dev
 | **Fusion** | Reciprocal Rank Fusion | Tunable linear blend (RRF chosen because it avoids needing an arbitrary, tuned weight between BM25 and Dense scores) |
 | **Reranker** | BGE Cross-Encoder / Cohere | Dedicated rerank API (BGE chosen for local dev but easily swapped to Cohere) |
 
-## Known Limitations
+## Known Limitations & App Positioning
 
+*   **Restricted API Tiers (Positioning):** This application is explicitly designed and positioned as a **limited demonstration app**. It operates entirely on restricted free-tier API keys for Gemini and Cohere, which will not be upgraded in the future. The built-in rate-limiting and caching mechanisms (SQLite) are hard-coded to support this low-throughput environment gracefully.
 *   **Bounded Corpus:** The system currently runs on a restricted corpus slice (50k-150k documents) focused on specific CPC codes to allow local indexing without massive infrastructure costs.
 *   **Weak Labels:** The evaluation harness uses examiner citations as weak labels for ground truth. This is standard but not as rigorous as expert hand-labeled relevance.
-*   **API Quota Constraints:** Running the full evaluation harness (`eval/run_eval.py`) across the 40+ claim gold set exhausts the Gemini Free Tier limits (which caps at 20 free-tier requests per day in some regions). A production or paid API tier is required for a complete end-to-end evaluation run.
 *   **Legal Disclaimer:** This tool assists prior-art research and is NOT a substitute for a registered patent attorney. Results are retrieval outputs and have not been reviewed by a legal professional.
 
 ## Links

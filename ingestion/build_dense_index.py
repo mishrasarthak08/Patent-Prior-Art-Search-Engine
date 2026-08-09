@@ -19,9 +19,15 @@ def build_dense_index(parquet_path: str = "data/corpus/corpus.parquet"):
     df = pd.read_parquet(parquet_path)
 
     # Initialize Qdrant Client
-    qdrant_host = os.getenv("QDRANT_HOST", "localhost")
-    qdrant_port = int(os.getenv("QDRANT_PORT", "6333"))
-    client = QdrantClient(host=qdrant_host, port=qdrant_port)
+    qdrant_host = os.environ.get("QDRANT_HOST", "localhost")
+    qdrant_port = int(os.environ.get("QDRANT_PORT", "6333"))
+    qdrant_url = os.environ.get("QDRANT_URL")
+    qdrant_api_key = os.environ.get("QDRANT_API_KEY")
+
+    if qdrant_url:
+        client = QdrantClient(url=qdrant_url, api_key=qdrant_api_key, timeout=10)
+    else:
+        client = QdrantClient(host=qdrant_host, port=qdrant_port, api_key=qdrant_api_key, timeout=10)
 
     collection_name = "patent_claims"
 

@@ -9,9 +9,15 @@ from backend.app.schemas import RetrievedDocument
 class DenseRetriever:
     def __init__(self, collection_name: str = "patent_claims"):
         self.collection_name = collection_name
-        qdrant_host = os.getenv("QDRANT_HOST", "localhost")
-        qdrant_port = int(os.getenv("QDRANT_PORT", "6333"))
-        self.client = QdrantClient(host=qdrant_host, port=qdrant_port, timeout=5)
+        qdrant_host = os.environ.get("QDRANT_HOST", "localhost")
+        qdrant_port = int(os.environ.get("QDRANT_PORT", "6333"))
+        qdrant_url = os.environ.get("QDRANT_URL")
+        qdrant_api_key = os.environ.get("QDRANT_API_KEY")
+
+        if qdrant_url:
+            self.client = QdrantClient(url=qdrant_url, api_key=qdrant_api_key, timeout=5)
+        else:
+            self.client = QdrantClient(host=qdrant_host, port=qdrant_port, api_key=qdrant_api_key, timeout=5)
         self.embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-2", task_type="retrieval_query")  # type: ignore
 
     def search(self, query: str, k: int, filters: dict | None = None) -> list[RetrievedDocument]:

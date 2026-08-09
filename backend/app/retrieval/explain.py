@@ -26,32 +26,41 @@ Retrieved Document Snippet:
 Provide a short, 1-2 sentence explanation:
 """
 
+
 class ExplanationGenerator:
     def __init__(self):
         self.llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0)
         self.prompt = ChatPromptTemplate.from_template(EXPLANATION_PROMPT)
         self.chain = self.prompt | self.llm
-        
+
     def explain(self, doc: RetrievedDocument, query_claim: DecomposedClaim) -> str:
         if not doc.snippet:
             return "No text available to explain relevance."
-            
+
         # Format matched elements for prompt
         matched_element_texts = []
         for elem_id in doc.matched_elements:
-            elem = next((e for e in query_claim.elements if e.element_id == elem_id), None)
+            elem = next(
+                (e for e in query_claim.elements if e.element_id == elem_id), None
+            )
             if elem:
                 matched_element_texts.append(f"- {elem_id}: {elem.text}")
-                
-        matched_str = "\n".join(matched_element_texts) if matched_element_texts else "None tracked"
-        
+
+        matched_str = (
+            "\n".join(matched_element_texts)
+            if matched_element_texts
+            else "None tracked"
+        )
+
         try:
-            response = self.chain.invoke({
-                "claim_text": query_claim.raw_claim_text,
-                "matched_elements": matched_str,
-                "retrieval_sources": ", ".join(doc.retrieval_sources),
-                "document_snippet": doc.snippet
-            })
+            response = self.chain.invoke(
+                {
+                    "claim_text": query_claim.raw_claim_text,
+                    "matched_elements": matched_str,
+                    "retrieval_sources": ", ".join(doc.retrieval_sources),
+                    "document_snippet": doc.snippet,
+                }
+            )
             return response.content
         except Exception as e:
             logger.error(f"Explanation generation failed: {e}")

@@ -2,8 +2,9 @@ from backend.app.schemas import (
     ClaimElement,
     DecomposedClaim,
     RetrievedDocument,
-    PriorArtSearchResponse
+    PriorArtSearchResponse,
 )
+
 
 def test_schemas_importable():
     # If this file runs, schemas are importable and have no circular dependencies
@@ -11,6 +12,7 @@ def test_schemas_importable():
     assert DecomposedClaim
     assert RetrievedDocument
     assert PriorArtSearchResponse
+
 
 def test_claim_element_validation():
     # Valid

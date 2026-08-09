@@ -9,61 +9,66 @@ import uuid
 # Load environment variables (e.g. GOOGLE_API_KEY)
 load_dotenv()
 
-def build_dense_index(parquet_path: str = 'data/corpus/corpus.parquet'):
+
+def build_dense_index(parquet_path: str = "data/corpus/corpus.parquet"):
     if not os.path.exists(parquet_path):
-        raise FileNotFoundError(f"Corpus file {parquet_path} not found. Run pull_corpus.py first.")
-        
+        raise FileNotFoundError(
+            f"Corpus file {parquet_path} not found. Run pull_corpus.py first."
+        )
+
     print(f"Loading corpus from {parquet_path}...")
     df = pd.read_parquet(parquet_path)
-    
+
     # Initialize Qdrant Client
     qdrant_host = os.getenv("QDRANT_HOST", "localhost")
     qdrant_port = int(os.getenv("QDRANT_PORT", "6333"))
     client = QdrantClient(host=qdrant_host, port=qdrant_port)
-    
+
     collection_name = "patent_claims"
-    
+
     # Initialize Embeddings
     print("Initializing Gemini embeddings...")
-    embeddings_model = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-2", task_type="retrieval_document")  # type: ignore
-    
+    embeddings_model = GoogleGenerativeAIEmbeddings(
+        model="models/gemini-embedding-2", task_type="retrieval_document"
+    )  # type: ignore
+
     # We must recreate the collection because Gemini uses 3072 dimensions
     if client.collection_exists(collection_name=collection_name):
         print(f"Deleting existing collection {collection_name} to resize for Gemini...")
         client.delete_collection(collection_name=collection_name)
-        
+
     client.create_collection(
         collection_name=collection_name,
         vectors_config=VectorParams(size=3072, distance=Distance.COSINE),
     )
-    
+
     points = []
-    
+
     print("Processing and chunking documents...")
     # Chunking strategy: 1 vector per claim, 1 vector for abstract
     for _, row in df.iterrows():
-        doc_id = row['id']
-        cpc_codes = list(row['cpc_codes']) if row['cpc_codes'] is not None else []
-        pub_date = str(row['publication_date'])
-        
+        doc_id = row["id"]
+        cpc_codes = list(row["cpc_codes"]) if row["cpc_codes"] is not None else []
+        pub_date = str(row["publication_date"])
+
         # Abstract
-        if row['abstract']:
+        if row["abstract"]:
             points.append(
                 {
-                    "text": row['abstract'],
+                    "text": row["abstract"],
                     "metadata": {
                         "doc_id": doc_id,
                         "type": "abstract",
                         "claim_index": 0,
                         "cpc_codes": cpc_codes,
-                        "publication_date": pub_date
-                    }
+                        "publication_date": pub_date,
+                    },
                 }
             )
-            
+
         # Claims
-        if row['claims'] is not None and len(row['claims']) > 0:
-            for i, claim in enumerate(row['claims']):
+        if row["claims"] is not None and len(row["claims"]) > 0:
+            for i, claim in enumerate(row["claims"]):
                 points.append(
                     {
                         "text": claim,
@@ -72,41 +77,46 @@ def build_dense_index(parquet_path: str = 'data/corpus/corpus.parquet'):
                             "type": "claim",
                             "claim_index": i,
                             "cpc_codes": cpc_codes,
-                            "publication_date": pub_date
-                        }
+                            "publication_date": pub_date,
+                        },
                     }
                 )
-                
+
     print(f"Generated {len(points)} chunks. Embedding and upserting in batches...")
-    
+
     # Process in batches
     batch_size = 100
     for i in range(0, len(points), batch_size):
-        batch = points[i:i+batch_size]
+        batch = points[i : i + batch_size]
         texts = [p["text"] for p in batch]
         metadatas = [p["metadata"] for p in batch]
-        
+
         # Embed
         vectors = embeddings_model.embed_documents(texts)
-        
+
         # Prepare points with deterministic UUIDs
         qdrant_points = [
             PointStruct(
-                id=str(uuid.uuid5(uuid.NAMESPACE_DNS, f"{metadata['doc_id']}_{metadata['type']}_{metadata['claim_index']}")),
+                id=str(
+                    uuid.uuid5(
+                        uuid.NAMESPACE_DNS,
+                        f"{metadata['doc_id']}_{metadata['type']}_{metadata['claim_index']}",
+                    )
+                ),
                 vector=vector,
-                payload={"text": text, **metadata}
+                payload={"text": text, **metadata},
             )
             for text, vector, metadata in zip(texts, vectors, metadatas)
         ]
-        
+
         # Upsert
-        client.upsert(
-            collection_name=collection_name,
-            points=qdrant_points
+        client.upsert(collection_name=collection_name, points=qdrant_points)
+        print(
+            f"Upserted batch {i // batch_size + 1} / {(len(points) + batch_size - 1) // batch_size}"
         )
-        print(f"Upserted batch {i // batch_size + 1} / {(len(points) + batch_size - 1) // batch_size}")
-        
+
     print("Dense indexing complete.")
+
 
 if __name__ == "__main__":
     build_dense_index()

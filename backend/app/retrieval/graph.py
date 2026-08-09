@@ -12,6 +12,7 @@ from backend.app.logger import get_logger
 
 logger = get_logger(__name__)
 
+
 class GraphState(TypedDict):
     raw_claim: str
     decomposed_claim: DecomposedClaim
@@ -20,6 +21,7 @@ class GraphState(TypedDict):
     fused_results: List[RetrievedDocument]
     final_results: List[RetrievedDocument]
 
+
 # Initialize components
 qu_pipeline = QueryUnderstandingPipeline()
 bm25_retriever = BM25Retriever()
@@ -27,10 +29,12 @@ dense_retriever = HydeDenseRetriever()
 reranker = CohereReranker()
 explanation_generator = ExplanationGenerator()
 
+
 def decompose_and_hyde(state: GraphState):
     logger.info("Graph node: decompose_and_hyde")
     claim = qu_pipeline.process_claim(state["raw_claim"])
     return {"decomposed_claim": claim}
+
 
 def retrieve_bm25(state: GraphState):
     logger.info("Graph node: retrieve_bm25")
@@ -39,6 +43,7 @@ def retrieve_bm25(state: GraphState):
     results = bm25_retriever.search(query, k=50)
     logger.info(f"BM25 found {len(results)} candidates")
     return {"bm25_results": results}
+
 
 def retrieve_dense(state: GraphState):
     logger.info("Graph node: retrieve_dense")
@@ -55,11 +60,15 @@ def retrieve_dense(state: GraphState):
     logger.info(f"Dense found {len(results)} candidates across elements")
     return {"dense_results": results}
 
+
 def fuse(state: GraphState):
     logger.info("Graph node: fuse")
-    fused = reciprocal_rank_fusion([state.get("bm25_results", []), state.get("dense_results", [])])
+    fused = reciprocal_rank_fusion(
+        [state.get("bm25_results", []), state.get("dense_results", [])]
+    )
     logger.info(f"Fusion resulted in {len(fused)} unique candidates")
     return {"fused_results": fused}
+
 
 def rerank(state: GraphState):
     logger.info("Graph node: rerank")
@@ -68,35 +77,40 @@ def rerank(state: GraphState):
     reranked = reranker.rerank(query, state["fused_results"], top_n=10)
     return {"final_results": reranked}
 
+
 def explain(state: GraphState):
     logger.info("Graph node: explain")
     final_docs = state["final_results"]
     query_claim = state["decomposed_claim"]
-    
+
     # Generate explanations for top 5 only
     for doc in final_docs[:5]:
         doc.explanation = explanation_generator.explain(doc, query_claim)
-        
+
     return {"final_results": final_docs}
+
 
 def build_graph():
     workflow = StateGraph(GraphState)
-    
+
     workflow.add_node("decompose", decompose_and_hyde)
     workflow.add_node("retrieve_bm25", retrieve_bm25)
     workflow.add_node("retrieve_dense", retrieve_dense)
     workflow.add_node("fuse", fuse)
     workflow.add_node("rerank", rerank)
     workflow.add_node("explain", explain)
-    
+
     workflow.add_edge(START, "decompose")
-    workflow.add_conditional_edges("decompose", lambda _: ["retrieve_bm25", "retrieve_dense"])
+    workflow.add_conditional_edges(
+        "decompose", lambda _: ["retrieve_bm25", "retrieve_dense"]
+    )
     workflow.add_edge("retrieve_bm25", "fuse")
     workflow.add_edge("retrieve_dense", "fuse")
     workflow.add_edge("fuse", "rerank")
     workflow.add_edge("rerank", "explain")
     workflow.add_edge("explain", END)
-    
+
     return workflow.compile()
+
 
 retrieval_graph = build_graph()

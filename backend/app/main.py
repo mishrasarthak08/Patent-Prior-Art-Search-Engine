@@ -9,15 +9,13 @@ from backend.app.schemas import PriorArtSearchResponse, DISCLAIMER_TEXT
 from backend.app.retrieval.graph import retrieval_graph
 from asgi_correlation_id import CorrelationIdMiddleware
 from backend.app.logger import get_logger
-
 import langchain
 from langchain_community.cache import SQLiteCache
-
-langchain.llm_cache = SQLiteCache(database_path=".langchain.db")
-
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+
+langchain.llm_cache = SQLiteCache(database_path=".langchain.db")
 
 logger = get_logger(__name__)
 limiter = Limiter(key_func=get_remote_address)
@@ -40,52 +38,64 @@ API_KEY_NAME = "X-API-Key"
 api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
 API_KEY = os.getenv("API_KEY", "dev_key")
 
+
 async def get_api_key(api_key_header: str = Security(api_key_header)):
     if api_key_header == API_KEY:
         return api_key_header
     raise HTTPException(status_code=401, detail="Could not validate credentials")
 
+
 class SearchRequest(BaseModel):
     raw_claim: str = Field(..., max_length=10000)
 
+
 @app.post("/search", response_model=PriorArtSearchResponse)
 @limiter.limit("5/minute")
-async def search(request: Request, search_request: SearchRequest, api_key: str = Depends(get_api_key)):
+async def search(
+    request: Request, search_request: SearchRequest, api_key: str = Depends(get_api_key)
+):
     if not search_request.raw_claim.strip():
         raise HTTPException(status_code=422, detail="Claim text empty")
-    
-    logger.info("Received search request", extra={"claim_length": len(search_request.raw_claim)})
+
+    logger.info(
+        "Received search request", extra={"claim_length": len(search_request.raw_claim)}
+    )
     start_time = time.time()
-    
+
     # Run graph
     try:
         final_state = retrieval_graph.invoke({"raw_claim": search_request.raw_claim})
     except Exception as e:
         logger.error(f"Graph execution failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-        
+
     latency_ms = {"total_ms": (time.time() - start_time) * 1000}
-    
+
     pipeline_stage_counts = {
         "bm25_candidates": len(final_state.get("bm25_results", [])),
         "dense_candidates": len(final_state.get("dense_results", [])),
         "fused_candidates": len(final_state.get("fused_results", [])),
-        "final_returned": len(final_state.get("final_results", []))
+        "final_returned": len(final_state.get("final_results", [])),
     }
-    
-    logger.info("Search request completed", extra={"latency_ms": latency_ms["total_ms"], **pipeline_stage_counts})
+
+    logger.info(
+        "Search request completed",
+        extra={"latency_ms": latency_ms["total_ms"], **pipeline_stage_counts},
+    )
 
     return PriorArtSearchResponse(
         query_claim=final_state["decomposed_claim"],
         results=final_state["final_results"],
         pipeline_stage_counts=pipeline_stage_counts,
         disclaimer=DISCLAIMER_TEXT,
-        latency_ms=latency_ms
+        latency_ms=latency_ms,
     )
+
 
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
 
 @app.get("/ready")
 def ready():
@@ -103,13 +113,15 @@ def ready():
         logger.warning(f"Qdrant connection failed: {e}")
         raise HTTPException(status_code=503, detail="Qdrant connection failed")
 
+
 @app.get("/eval/latest")
 def eval_latest(api_key: str = Depends(get_api_key)):
     import csv
+
     lift_table_path = "eval/results/lift_table.csv"
     if not os.path.exists(lift_table_path):
         raise HTTPException(status_code=404, detail="Eval harness results not found.")
-    
+
     results = []
     with open(lift_table_path, "r") as f:
         reader = csv.DictReader(f)

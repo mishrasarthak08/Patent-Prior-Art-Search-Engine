@@ -17,9 +17,11 @@ export default function Home() {
     setError("");
     setResults(null);
     try {
-      const res = await fetch("http://localhost:8000/search", {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const apiKey = process.env.NEXT_PUBLIC_APP_API_KEY || "dev_key";
+      const res = await fetch(`${apiUrl}/search`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-API-Key": "dev_key" },
+        headers: { "Content-Type": "application/json", "X-API-Key": apiKey },
         body: JSON.stringify({ raw_claim: claimText }),
       });
       if (!res.ok) {

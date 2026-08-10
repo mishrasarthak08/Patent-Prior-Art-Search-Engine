@@ -31,7 +31,7 @@ Provide a short, 1-2 sentence explanation:
 
 class ExplanationGenerator:
     def __init__(self):
-        self.llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0)
+        self.llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0)
         self.prompt = ChatPromptTemplate.from_template(EXPLANATION_PROMPT)
         self.chain = self.prompt | self.llm
 
@@ -62,4 +62,6 @@ class ExplanationGenerator:
             logger.error(f"Explanation generation failed: {e}")
             if "429" in str(e) or "ResourceExhausted" in str(e):
                 return "Explanation omitted due to API quota limits."
-            return f"Explanation generation failed: {str(e)}"
+            import traceback
+            tb = traceback.format_exc()
+            return f"Explanation generation failed: {str(e)}\n\nTraceback:\n{tb}"

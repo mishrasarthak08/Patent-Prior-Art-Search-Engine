@@ -7,7 +7,7 @@ from asgi_correlation_id import CorrelationIdMiddleware
 from fastapi import Depends, FastAPI, HTTPException, Request, Security
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security.api_key import APIKeyHeader
-from langchain_community.cache import SQLiteCache
+import langchain
 from pydantic import BaseModel, Field
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -17,7 +17,7 @@ from backend.app.logger import get_logger
 from backend.app.retrieval.graph import retrieval_graph
 from backend.app.schemas import DISCLAIMER_TEXT, PriorArtSearchResponse
 
-langchain.llm_cache = SQLiteCache(database_path=".langchain.db")
+# Cache disabled due to serialization bugs in langchain-google-genai
 
 logger = get_logger(__name__)
 limiter = Limiter(key_func=get_remote_address)

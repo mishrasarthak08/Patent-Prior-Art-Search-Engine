@@ -102,11 +102,13 @@ def health():
 
 @app.get("/ready")
 def ready():
-    # Check Qdrant connectivity
-    qdrant_host = os.getenv("QDRANT_HOST", "localhost")
-    qdrant_port = os.getenv("QDRANT_PORT", "6333")
+    # Check Qdrant connectivity using QDRANT_URL
+    qdrant_url = os.getenv("QDRANT_URL")
+    if not qdrant_url:
+        return {"status": "ready", "note": "qdrant_url not set, assuming dev"}
+        
     try:
-        response = requests.get(f"http://{qdrant_host}:{qdrant_port}/readyz", timeout=2)
+        response = requests.get(f"{qdrant_url}/readyz", timeout=3)
         if response.status_code == 200:
             return {"status": "ready"}
         else:

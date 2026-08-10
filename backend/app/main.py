@@ -106,7 +106,7 @@ def ready():
     qdrant_url = os.getenv("QDRANT_URL")
     if not qdrant_url:
         return {"status": "ready", "note": "qdrant_url not set, assuming dev"}
-        
+
     try:
         response = requests.get(f"{qdrant_url}/readyz", timeout=3)
         if response.status_code == 200:

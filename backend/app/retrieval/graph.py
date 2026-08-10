@@ -1,4 +1,5 @@
 from typing import TypedDict
+import concurrent.futures
 
 from langgraph.graph import END, START, StateGraph
 
@@ -82,9 +83,18 @@ def explain(state: GraphState):
     final_docs = state["final_results"]
     query_claim = state["decomposed_claim"]
 
-    # Generate explanations for top 5 only
-    for doc in final_docs[:5]:
-        doc.explanation = explanation_generator.explain(doc, query_claim)
+    # Generate explanations for top 5 only in parallel
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        futures = {
+            executor.submit(explanation_generator.explain, doc, query_claim): doc
+            for doc in final_docs[:5]
+        }
+        for future in concurrent.futures.as_completed(futures):
+            doc = futures[future]
+            try:
+                doc.explanation = future.result()
+            except Exception as e:
+                doc.explanation = f"Failed to generate explanation: {e}"
 
     return {"final_results": final_docs}
 

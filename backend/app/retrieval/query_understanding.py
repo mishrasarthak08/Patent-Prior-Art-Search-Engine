@@ -2,6 +2,7 @@ import logging
 
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import ChatPromptTemplate
+import concurrent.futures
 from langchain_google_genai import ChatGoogleGenerativeAI
 from pydantic import ValidationError
 
@@ -119,9 +120,14 @@ class QueryUnderstandingPipeline:
         # We choose Element-level HyDE here because it allows for finer-grained dense retrieval
         # on specific technical limitations, avoiding the "lost in the middle" problem of long
         # whole-claim passages. This costs more LLM calls but improves recall on paraphrased elements.
-        for element in decomposed.elements:
+        
+        def generate_hyde(element):
             hyde_passage = self.generate_hyde_for_element(element)
             element.hyde_passage = hyde_passage
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            futures = [executor.submit(generate_hyde, element) for element in decomposed.elements]
+            concurrent.futures.wait(futures)
 
         logger.info("Query understanding complete.")
         return decomposed

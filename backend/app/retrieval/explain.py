@@ -62,4 +62,4 @@ class ExplanationGenerator:
             logger.error(f"Explanation generation failed: {e}")
             if "429" in str(e) or "ResourceExhausted" in str(e):
                 return "Explanation omitted due to API quota limits."
-            return "Explanation generation failed."
+            return f"Explanation generation failed: {str(e)}"

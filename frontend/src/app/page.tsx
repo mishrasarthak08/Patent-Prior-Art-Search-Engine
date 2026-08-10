@@ -1,15 +1,91 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const DISCLAIMER_TEXT = `This tool assists prior-art research and is NOT a substitute for a registered patent attorney, patent agent, or professional prior-art search firm. Results are retrieval-and-ranking outputs from an automated pipeline and have not been reviewed by a legal professional.`;
+
+const HowItWorks = () => (
+  <div className="grid md:grid-cols-4 gap-4 mt-12 mb-8">
+    {[
+      { step: "1", title: "Claim Decomposition", desc: "Gemini AI breaks complex claims into discrete structural elements and generates HyDE passages." },
+      { step: "2", title: "Hybrid Retrieval", desc: "BM25 keyword search is fused with Cohere dense vector search via Qdrant to maximize recall." },
+      { step: "3", title: "Cross-Encoder Reranking", desc: "Cohere Rerank v3 dynamically rescores the top candidates for precision." },
+      { step: "4", title: "Explainable AI", desc: "Each prior-art candidate is analyzed by AI to explain exactly why it is relevant." }
+    ].map(s => (
+      <div key={s.step} className="bg-zinc-900/40 border border-zinc-800/80 p-5 rounded-xl hover:bg-zinc-900/80 transition-colors backdrop-blur-sm">
+        <div className="bg-indigo-500/20 text-indigo-400 w-8 h-8 rounded-full flex items-center justify-center font-bold mb-3 border border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.2)]">{s.step}</div>
+        <h3 className="font-semibold text-zinc-200 mb-2">{s.title}</h3>
+        <p className="text-zinc-400 text-sm">{s.desc}</p>
+      </div>
+    ))}
+  </div>
+);
+
+const EvalMetrics = ({ metrics }: { metrics: any[] }) => {
+  if (!metrics || metrics.length === 0) return null;
+  return (
+    <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-xl overflow-hidden mt-8 mb-12 backdrop-blur-sm shadow-xl">
+      <div className="px-6 py-4 border-b border-zinc-800/80 bg-zinc-900/80 flex items-center gap-2">
+        <svg className="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        <h3 className="font-semibold text-zinc-100">System Evaluation Metrics (Latest Run)</h3>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm text-left">
+          <thead className="bg-zinc-950/60 text-zinc-400 uppercase text-xs tracking-wider">
+            <tr>
+              <th className="px-6 py-3 font-semibold">System Pipeline</th>
+              <th className="px-6 py-3 font-semibold">Precision@5</th>
+              <th className="px-6 py-3 font-semibold">Recall@5</th>
+              <th className="px-6 py-3 font-semibold">MRR</th>
+              <th className="px-6 py-3 font-semibold">nDCG@5</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-zinc-800/50">
+            {metrics.map((row) => (
+              <tr key={row.System} className="hover:bg-zinc-800/20 transition-colors">
+                <td className="px-6 py-4 font-medium text-zinc-200 capitalize flex items-center gap-2">
+                  {row.System === 'full' && <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>}
+                  {row.System}
+                </td>
+                <td className="px-6 py-4 text-zinc-300 font-mono">{row["P@5"]}</td>
+                <td className="px-6 py-4 text-zinc-300 font-mono">{row["R@5"]}</td>
+                <td className="px-6 py-4 text-zinc-300 font-mono">{row.MRR}</td>
+                <td className="px-6 py-4 text-emerald-400 font-mono font-semibold">{row["nDCG@5"]}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
 
 export default function Home() {
   const [claimText, setClaimText] = useState("");
   const [results, setResults] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [evalMetrics, setEvalMetrics] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const apiKey = process.env.NEXT_PUBLIC_APP_API_KEY || "dev_key";
+        const res = await fetch(`${apiUrl}/eval/latest`, { headers: { "X-API-Key": apiKey } });
+        if (res.ok) {
+          const data = await res.json();
+          setEvalMetrics(data.metrics || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch eval metrics:", err);
+      }
+    };
+    fetchMetrics();
+  }, []);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,6 +149,15 @@ export default function Home() {
             A Hybrid-Retrieval, Reranked, and Explainable Prior-Art Discovery System
           </motion.p>
         </header>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
+          <HowItWorks />
+          <EvalMetrics metrics={evalMetrics} />
+        </motion.div>
 
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}

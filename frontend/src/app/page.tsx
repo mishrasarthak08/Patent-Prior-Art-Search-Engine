@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import ReactMarkdown from 'react-markdown';
 
 const DISCLAIMER_TEXT = `This tool assists prior-art research and is NOT a substitute for a registered patent attorney, patent agent, or professional prior-art search firm. Results are retrieval-and-ranking outputs from an automated pipeline and have not been reviewed by a legal professional.`;
 
@@ -340,8 +341,18 @@ export default function Home() {
                         </div>
                         
                         <div className="bg-indigo-500/5 border border-indigo-500/10 p-4 rounded-xl text-sm text-indigo-100/80">
-                          <span className="font-bold text-indigo-400 block mb-1">AI Relevance Analysis</span> 
-                          {doc.explanation}
+                          <span className="font-bold text-indigo-400 block mb-2">AI Relevance Analysis</span> 
+                          <ReactMarkdown
+                            components={{
+                              p: ({node, ...props}) => <p className="mb-2 last:mb-0 leading-relaxed" {...props} />,
+                              strong: ({node, ...props}) => <strong className="font-bold text-indigo-300" {...props} />,
+                              ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-2 space-y-1" {...props} />,
+                              ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-2 space-y-1" {...props} />,
+                              li: ({node, ...props}) => <li className="pl-1" {...props} />
+                            }}
+                          >
+                            {doc.explanation}
+                          </ReactMarkdown>
                         </div>
 
                         <div className="flex flex-wrap gap-2 items-center bg-zinc-950 p-3 rounded-lg border border-zinc-800/50">

@@ -1,13 +1,13 @@
+import concurrent.futures
 import logging
 
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-import concurrent.futures
 from langchain_google_genai import ChatGoogleGenerativeAI
 from pydantic import ValidationError
 
 from backend.app.schemas import ClaimElement, DecomposedClaim
-from backend.app.utils.key_manager import get_current_api_key, rotate_api_key, get_all_keys
+from backend.app.utils.key_manager import get_all_keys, get_current_api_key, rotate_api_key
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -38,8 +38,20 @@ Hypothetical Prior Art Passage:
 class QueryUnderstandingPipeline:
     def __init__(self):
         # Using Gemini. The prompt structure expects structured JSON fallback or native function calling.
-        self.llm = ChatGoogleGenerativeAI(google_api_key=get_current_api_key(), model="gemini-flash-latest", temperature=0, request_timeout=15.0, max_retries=0)  # type: ignore
-        self.hyde_llm = ChatGoogleGenerativeAI(google_api_key=get_current_api_key(), model="gemini-flash-latest", temperature=0.7, request_timeout=10.0, max_retries=0)  # type: ignore
+        self.llm = ChatGoogleGenerativeAI(
+            google_api_key=get_current_api_key(),
+            model="gemini-flash-latest",
+            temperature=0,
+            request_timeout=15.0,
+            max_retries=0,
+        )  # type: ignore
+        self.hyde_llm = ChatGoogleGenerativeAI(
+            google_api_key=get_current_api_key(),
+            model="gemini-flash-latest",
+            temperature=0.7,
+            request_timeout=10.0,
+            max_retries=0,
+        )  # type: ignore
 
         self.decomposition_parser = PydanticOutputParser(pydantic_object=DecomposedClaim)
         self.decomposition_prompt = ChatPromptTemplate.from_messages(
@@ -65,7 +77,7 @@ class QueryUnderstandingPipeline:
                 {
                     "raw_claim": raw_claim,
                     "format_instructions": self.decomposition_parser.get_format_instructions(),
-                }
+                },
             )
             try:
                 result = future.result(timeout=30.0)
@@ -76,7 +88,7 @@ class QueryUnderstandingPipeline:
                     logger.error("Max retries reached for claim decomposition.")
                     return DecomposedClaim(
                         raw_claim_text=raw_claim,
-                        elements=[ClaimElement(element_id="el-fallback", text=raw_claim, element_type="structural")]
+                        elements=[ClaimElement(element_id="el-fallback", text=raw_claim, element_type="structural")],
                     )
             except ValidationError as e:
                 logger.warning(f"Validation error on attempt {attempt}: {e}")
@@ -84,7 +96,7 @@ class QueryUnderstandingPipeline:
                     logger.error("Max retries reached for claim decomposition.")
                     return DecomposedClaim(
                         raw_claim_text=raw_claim,
-                        elements=[ClaimElement(element_id="el-fallback", text=raw_claim, element_type="structural")]
+                        elements=[ClaimElement(element_id="el-fallback", text=raw_claim, element_type="structural")],
                     )
             except Exception as e:
                 logger.warning(f"API Error during decomposition: {e}")
@@ -92,16 +104,26 @@ class QueryUnderstandingPipeline:
                 if "429" in error_str or "quota" in error_str or "resourceexhausted" in error_str:
                     if attempt < total_attempts - 1:
                         logger.warning("Quota hit, rotating key for decomposition...")
-                        failed_key = self.llm.google_api_key.get_secret_value() if hasattr(self.llm.google_api_key, 'get_secret_value') else self.llm.google_api_key
+                        failed_key = (
+                            self.llm.google_api_key.get_secret_value()
+                            if hasattr(self.llm.google_api_key, "get_secret_value")
+                            else self.llm.google_api_key
+                        )
                         rotate_api_key(failed_key)
-                        self.llm = ChatGoogleGenerativeAI(google_api_key=get_current_api_key(), model="gemini-flash-latest", temperature=0, request_timeout=15.0, max_retries=0)  # type: ignore
+                        self.llm = ChatGoogleGenerativeAI(
+                            google_api_key=get_current_api_key(),
+                            model="gemini-flash-latest",
+                            temperature=0,
+                            request_timeout=15.0,
+                            max_retries=0,
+                        )  # type: ignore
                         chain = self.decomposition_prompt | self.llm | self.decomposition_parser
                         continue
                 if attempt == total_attempts - 1:
                     logger.error("Fallback triggered due to API limits or max retries.")
                     return DecomposedClaim(
                         raw_claim_text=raw_claim,
-                        elements=[ClaimElement(element_id="el-fallback", text=raw_claim, element_type="structural")]
+                        elements=[ClaimElement(element_id="el-fallback", text=raw_claim, element_type="structural")],
                     )
             finally:
                 executor.shutdown(wait=False)
@@ -125,9 +147,19 @@ class QueryUnderstandingPipeline:
                 if "429" in error_str or "quota" in error_str or "resourceexhausted" in error_str:
                     if attempt < total_attempts - 1:
                         logger.warning("Quota hit, rotating key for HyDE generation...")
-                        failed_key = self.hyde_llm.google_api_key.get_secret_value() if hasattr(self.hyde_llm.google_api_key, 'get_secret_value') else self.hyde_llm.google_api_key
+                        failed_key = (
+                            self.hyde_llm.google_api_key.get_secret_value()
+                            if hasattr(self.hyde_llm.google_api_key, "get_secret_value")
+                            else self.hyde_llm.google_api_key
+                        )
                         rotate_api_key(failed_key)
-                        self.hyde_llm = ChatGoogleGenerativeAI(google_api_key=get_current_api_key(), model="gemini-flash-latest", temperature=0.7, request_timeout=10.0, max_retries=0)  # type: ignore
+                        self.hyde_llm = ChatGoogleGenerativeAI(
+                            google_api_key=get_current_api_key(),
+                            model="gemini-flash-latest",
+                            temperature=0.7,
+                            request_timeout=10.0,
+                            max_retries=0,
+                        )  # type: ignore
                         chain = prompt | self.hyde_llm
                         continue
                 return ""
@@ -140,12 +172,12 @@ class QueryUnderstandingPipeline:
 
         logger.info(f"Decomposed into {len(decomposed.elements)} elements. Generating HyDE passages...")
         # Step 2: Generate HyDE passages
-        
+
         # Fast fail: If decomposition fell back, don't waste time trying HyDE
         if len(decomposed.elements) == 1 and decomposed.elements[0].element_id == "el-fallback":
             logger.info("Skipping HyDE generation for fallback element.")
             return decomposed
-        
+
         def generate_hyde(element):
             hyde_passage = self.generate_hyde_for_element(element)
             element.hyde_passage = hyde_passage

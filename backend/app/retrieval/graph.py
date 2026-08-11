@@ -1,5 +1,5 @@
-from typing import TypedDict
 import concurrent.futures
+from typing import TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
@@ -49,12 +49,16 @@ def retrieve_bm25(state: GraphState):
 
 def retrieve_dense(state: GraphState):
     logger.info("Graph node: retrieve_dense")
-    
-    if len(state["decomposed_claim"].elements) == 1 and state["decomposed_claim"].elements[0].element_id == "el-fallback":
+
+    if (
+        len(state["decomposed_claim"].elements) == 1
+        and state["decomposed_claim"].elements[0].element_id == "el-fallback"
+    ):
         logger.info("Fallback decomposition detected. Skipping dense retrieval to save API quota.")
         return {"dense_results": []}
 
     results = []
+
     # Per-element dense retrieval with HyDE (Parallelized)
     def fetch_dense_for_element(element):
         query = element.hyde_passage if element.hyde_passage else element.text
@@ -66,7 +70,7 @@ def retrieve_dense(state: GraphState):
 
     executor = concurrent.futures.ThreadPoolExecutor(max_workers=4)
     futures = [executor.submit(fetch_dense_for_element, element) for element in state["decomposed_claim"].elements]
-    
+
     try:
         for future in concurrent.futures.as_completed(futures, timeout=30.0):
             try:
@@ -103,10 +107,7 @@ def explain(state: GraphState):
 
     # Generate explanations for top 5 only in parallel
     executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
-    futures = {
-        executor.submit(explanation_generator.explain, doc, query_claim): doc
-        for doc in final_docs[:5]
-    }
+    futures = {executor.submit(explanation_generator.explain, doc, query_claim): doc for doc in final_docs[:5]}
     try:
         for future in concurrent.futures.as_completed(futures, timeout=30.0):
             doc = futures[future]
@@ -118,7 +119,7 @@ def explain(state: GraphState):
         logger.warning("Explanation generation timed out (likely rate limit retries).")
         # Handle any futures that didn't complete within the timeout
         for future, doc in futures.items():
-            if not getattr(doc, 'explanation', None):
+            if not getattr(doc, "explanation", None):
                 doc.explanation = "Explanation omitted due to API timeout/quota."
     finally:
         executor.shutdown(wait=False)

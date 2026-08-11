@@ -63,12 +63,12 @@ def test_claim_decomposition_retry_on_malformed(pipeline):
 def test_claim_decomposition_fails_safely_after_max_retries(pipeline):
     malformed_msg = AIMessage(content='{"missing_fields": true}')
 
-    with patch(
-        "backend.app.retrieval.query_understanding.ChatGoogleGenerativeAI.invoke",
-        return_value=malformed_msg,
-    ) as mock_invoke, patch(
-        "backend.app.retrieval.query_understanding.get_all_keys",
-        return_value=["dummy_key"]
+    with (
+        patch(
+            "backend.app.retrieval.query_understanding.ChatGoogleGenerativeAI.invoke",
+            return_value=malformed_msg,
+        ) as mock_invoke,
+        patch("backend.app.retrieval.query_understanding.get_all_keys", return_value=["dummy_key"]),
     ):
         result = pipeline.decompose_claim("test claim", max_retries=1)
         assert result.raw_claim_text == "test claim"

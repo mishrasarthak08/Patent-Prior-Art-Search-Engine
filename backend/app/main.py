@@ -1,13 +1,12 @@
 import os
 import time
 
-import langchain
+import langchain_google_genai.chat_models
 import requests
 from asgi_correlation_id import CorrelationIdMiddleware
 from fastapi import Depends, FastAPI, HTTPException, Request, Security
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security.api_key import APIKeyHeader
-import langchain
 from pydantic import BaseModel, Field
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -17,11 +16,14 @@ from backend.app.logger import get_logger
 from backend.app.retrieval.graph import retrieval_graph
 from backend.app.schemas import DISCLAIMER_TEXT, PriorArtSearchResponse
 
-import langchain_google_genai.chat_models
+
 def _no_op_retry_decorator():
     def decorator(func):
         return func
+
     return decorator
+
+
 langchain_google_genai.chat_models._create_retry_decorator = _no_op_retry_decorator
 
 logger = get_logger(__name__)
@@ -119,7 +121,7 @@ def ready():
         else:
             logger.exception("Qdrant not ready")
             raise HTTPException(status_code=503, detail="Qdrant not ready")
-    except requests.RequestException as e:
+    except requests.RequestException:
         logger.exception("Qdrant connection failed")
         raise HTTPException(status_code=503, detail="Qdrant connection failed")
 

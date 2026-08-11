@@ -4,7 +4,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from backend.app.schemas import DecomposedClaim, RetrievedDocument
-from backend.app.utils.key_manager import get_current_api_key, rotate_api_key, get_all_keys
+from backend.app.utils.key_manager import get_all_keys, get_current_api_key, rotate_api_key
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,9 @@ Provide a short, 1-2 sentence explanation:
 
 class ExplanationGenerator:
     def __init__(self):
-        self.llm = ChatGoogleGenerativeAI(google_api_key=get_current_api_key(), model="gemini-flash-latest", temperature=0, max_retries=0)  # type: ignore
+        self.llm = ChatGoogleGenerativeAI(
+            google_api_key=get_current_api_key(), model="gemini-flash-latest", temperature=0, max_retries=0
+        )  # type: ignore
         self.prompt = ChatPromptTemplate.from_template(EXPLANATION_PROMPT)
         self.chain = self.prompt | self.llm
 
@@ -67,15 +69,25 @@ class ExplanationGenerator:
                 if "429" in error_str or "resourceexhausted" in error_str or "quota" in error_str:
                     if attempt < total_attempts - 1:
                         logger.warning("Quota hit, rotating key for explanation...")
-                        failed_key = self.llm.google_api_key.get_secret_value() if hasattr(self.llm.google_api_key, 'get_secret_value') else self.llm.google_api_key
+                        failed_key = (
+                            self.llm.google_api_key.get_secret_value()
+                            if hasattr(self.llm.google_api_key, "get_secret_value")
+                            else self.llm.google_api_key
+                        )
                         rotate_api_key(failed_key)
-                        self.llm = ChatGoogleGenerativeAI(google_api_key=get_current_api_key(), model="gemini-flash-latest", temperature=0, max_retries=0)  # type: ignore
+                        self.llm = ChatGoogleGenerativeAI(
+                            google_api_key=get_current_api_key(),
+                            model="gemini-flash-latest",
+                            temperature=0,
+                            max_retries=0,
+                        )  # type: ignore
                         self.chain = self.prompt | self.llm
                         continue
                     return "Explanation omitted due to API quota limits across all keys."
-                
+
                 import traceback
+
                 tb = traceback.format_exc()
                 return f"Explanation generation failed: {str(e)}\n\nTraceback:\n{tb}"
-        
+
         return "Explanation omitted due to API quota limits across all keys."

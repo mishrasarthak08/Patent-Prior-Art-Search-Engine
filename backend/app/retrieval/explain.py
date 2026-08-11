@@ -4,6 +4,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from backend.app.schemas import DecomposedClaim, RetrievedDocument
+from backend.app.utils.key_manager import get_current_api_key, rotate_api_key, get_all_keys
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ Provide a short, 1-2 sentence explanation:
 
 class ExplanationGenerator:
     def __init__(self):
-        self.llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0)
+        self.llm = ChatGoogleGenerativeAI(google_api_key=get_current_api_key(), model="gemini-flash-latest", temperature=0, max_retries=0)
         self.prompt = ChatPromptTemplate.from_template(EXPLANATION_PROMPT)
         self.chain = self.prompt | self.llm
 
@@ -48,20 +49,33 @@ class ExplanationGenerator:
 
         matched_str = "\n".join(matched_element_texts) if matched_element_texts else "None tracked"
 
-        try:
-            response = self.chain.invoke(
-                {
-                    "claim_text": query_claim.raw_claim_text,
-                    "matched_elements": matched_str,
-                    "retrieval_sources": ", ".join(doc.retrieval_sources),
-                    "document_snippet": doc.snippet,
-                }
-            )
-            return response.content
-        except Exception as e:
-            logger.error(f"Explanation generation failed: {e}")
-            if "429" in str(e) or "ResourceExhausted" in str(e):
-                return "Explanation omitted due to API quota limits."
-            import traceback
-            tb = traceback.format_exc()
-            return f"Explanation generation failed: {str(e)}\n\nTraceback:\n{tb}"
+        total_attempts = len(get_all_keys()) or 1
+        for attempt in range(total_attempts):
+            try:
+                response = self.chain.invoke(
+                    {
+                        "claim_text": query_claim.raw_claim_text,
+                        "matched_elements": matched_str,
+                        "retrieval_sources": ", ".join(doc.retrieval_sources),
+                        "document_snippet": doc.snippet,
+                    }
+                )
+                return response.content
+            except Exception as e:
+                logger.error(f"Explanation generation failed: {e}")
+                error_str = str(e).lower()
+                if "429" in error_str or "resourceexhausted" in error_str or "quota" in error_str:
+                    if attempt < total_attempts - 1:
+                        logger.warning("Quota hit, rotating key for explanation...")
+                        failed_key = self.llm.google_api_key.get_secret_value() if hasattr(self.llm.google_api_key, 'get_secret_value') else self.llm.google_api_key
+                        rotate_api_key(failed_key)
+                        self.llm = ChatGoogleGenerativeAI(google_api_key=get_current_api_key(), model="gemini-flash-latest", temperature=0, max_retries=0)
+                        self.chain = self.prompt | self.llm
+                        continue
+                    return "Explanation omitted due to API quota limits across all keys."
+                
+                import traceback
+                tb = traceback.format_exc()
+                return f"Explanation generation failed: {str(e)}\n\nTraceback:\n{tb}"
+        
+        return "Explanation omitted due to API quota limits across all keys."

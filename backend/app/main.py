@@ -17,7 +17,12 @@ from backend.app.logger import get_logger
 from backend.app.retrieval.graph import retrieval_graph
 from backend.app.schemas import DISCLAIMER_TEXT, PriorArtSearchResponse
 
-# Cache disabled due to serialization bugs in langchain-google-genai
+import langchain_google_genai.chat_models
+def _no_op_retry_decorator():
+    def decorator(func):
+        return func
+    return decorator
+langchain_google_genai.chat_models._create_retry_decorator = _no_op_retry_decorator
 
 logger = get_logger(__name__)
 limiter = Limiter(key_func=get_remote_address)
@@ -112,10 +117,10 @@ def ready():
         if response.status_code == 200:
             return {"status": "ready"}
         else:
-            logger.warning("Qdrant not ready")
+            logger.exception("Qdrant not ready")
             raise HTTPException(status_code=503, detail="Qdrant not ready")
     except requests.RequestException as e:
-        logger.warning(f"Qdrant connection failed: {e}")
+        logger.exception("Qdrant connection failed")
         raise HTTPException(status_code=503, detail="Qdrant connection failed")
 
 

@@ -95,19 +95,30 @@ export default function Home() {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       const apiKey = process.env.NEXT_PUBLIC_APP_API_KEY || "dev_key";
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000);
+
       const res = await fetch(`${apiUrl}/search`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-API-Key": apiKey },
         body: JSON.stringify({ raw_claim: claimText }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
+
       if (!res.ok) {
         throw new Error(`Search failed with status: ${res.status}`);
       }
       const data = await res.json();
       setResults(data);
     } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Search failed. Ensure backend and Qdrant are running.");
+      if (err.name === 'AbortError') {
+        setError("Search request timed out (120s). Try a shorter claim or check backend.");
+      } else {
+        console.error(err);
+        setError(err.message || "Search failed. Ensure backend and Qdrant are running.");
+      }
     }
     setLoading(false);
   };

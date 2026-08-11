@@ -25,7 +25,7 @@ class CohereReranker:
             self.client = cohere.Client(api_key=api_key, timeout=5.0)
 
     @retry(
-        stop=stop_after_attempt(3),
+        stop=stop_after_attempt(1),
         wait=wait_exponential(multiplier=1, min=1, max=5),
         retry=retry_if_exception_type(Exception),
         reraise=True,

@@ -1,3 +1,4 @@
+import os
 from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
@@ -30,7 +31,8 @@ def test_ready_endpoint_failure(mock_get):
     mock_resp.status_code = 500
     mock_get.return_value = mock_resp
 
-    response = client.get("/ready")
+    with patch.dict(os.environ, {"QDRANT_URL": "http://mock-qdrant:6333"}):
+        response = client.get("/ready")
     assert response.status_code == 503
 
 

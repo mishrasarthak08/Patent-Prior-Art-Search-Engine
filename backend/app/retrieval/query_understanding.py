@@ -7,6 +7,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from pydantic import ValidationError
 
 from backend.app.schemas import ClaimElement, DecomposedClaim
+from backend.app.utils.key_manager import get_current_api_key, rotate_api_key, get_all_keys
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -37,8 +38,8 @@ Hypothetical Prior Art Passage:
 class QueryUnderstandingPipeline:
     def __init__(self):
         # Using Gemini. The prompt structure expects structured JSON fallback or native function calling.
-        self.llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0, request_timeout=15.0)
-        self.hyde_llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.7, request_timeout=10.0)
+        self.llm = ChatGoogleGenerativeAI(google_api_key=get_current_api_key(), model="gemini-flash-latest", temperature=0, request_timeout=15.0, max_retries=0)
+        self.hyde_llm = ChatGoogleGenerativeAI(google_api_key=get_current_api_key(), model="gemini-flash-latest", temperature=0.7, request_timeout=10.0, max_retries=0)
 
         self.decomposition_parser = PydanticOutputParser(pydantic_object=DecomposedClaim)
         self.decomposition_prompt = ChatPromptTemplate.from_messages(
@@ -51,48 +52,59 @@ class QueryUnderstandingPipeline:
             ]
         )
 
-    def decompose_claim(self, raw_claim: str, max_retries: int = 1) -> DecomposedClaim:
+    def decompose_claim(self, raw_claim: str, max_retries: int = 0) -> DecomposedClaim:
         """Decomposes a raw claim with retry logic for schema validation (fails safely)."""
-        # Using .with_structured_output if model supports it, but PydanticOutputParser is more universally compatible
         chain = self.decomposition_prompt | self.llm | self.decomposition_parser
 
-        for attempt in range(max_retries + 1):
+        total_attempts = max(max_retries + 1, len(get_all_keys()) or 1)
+
+        for attempt in range(total_attempts):
+            executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+            future = executor.submit(
+                chain.invoke,
+                {
+                    "raw_claim": raw_claim,
+                    "format_instructions": self.decomposition_parser.get_format_instructions(),
+                }
+            )
             try:
-                result = chain.invoke(
-                    {
-                        "raw_claim": raw_claim,
-                        "format_instructions": self.decomposition_parser.get_format_instructions(),
-                    }
-                )
+                result = future.result(timeout=30.0)
                 return result
-            except ValidationError as e:
-                logger.warning(f"Validation error on attempt {attempt}: {e}")
-                if attempt == max_retries:
+            except concurrent.futures.TimeoutError:
+                logger.warning(f"Decomposition timeout on attempt {attempt}")
+                if attempt == total_attempts - 1:
                     logger.error("Max retries reached for claim decomposition.")
                     return DecomposedClaim(
                         raw_claim_text=raw_claim,
-                        elements=[
-                            ClaimElement(
-                                element_id="el-fallback",
-                                text=raw_claim,
-                                element_type="structural",
-                            )
-                        ],
+                        elements=[ClaimElement(element_id="el-fallback", text=raw_claim, element_type="structural")]
+                    )
+            except ValidationError as e:
+                logger.warning(f"Validation error on attempt {attempt}: {e}")
+                if attempt == total_attempts - 1:
+                    logger.error("Max retries reached for claim decomposition.")
+                    return DecomposedClaim(
+                        raw_claim_text=raw_claim,
+                        elements=[ClaimElement(element_id="el-fallback", text=raw_claim, element_type="structural")]
                     )
             except Exception as e:
                 logger.warning(f"API Error during decomposition: {e}")
-                if "429" in str(e) or attempt == max_retries:
+                error_str = str(e).lower()
+                if "429" in error_str or "quota" in error_str or "resourceexhausted" in error_str:
+                    if attempt < total_attempts - 1:
+                        logger.warning("Quota hit, rotating key for decomposition...")
+                        failed_key = self.llm.google_api_key.get_secret_value() if hasattr(self.llm.google_api_key, 'get_secret_value') else self.llm.google_api_key
+                        rotate_api_key(failed_key)
+                        self.llm = ChatGoogleGenerativeAI(google_api_key=get_current_api_key(), model="gemini-flash-latest", temperature=0, request_timeout=15.0, max_retries=0)
+                        chain = self.decomposition_prompt | self.llm | self.decomposition_parser
+                        continue
+                if attempt == total_attempts - 1:
                     logger.error("Fallback triggered due to API limits or max retries.")
                     return DecomposedClaim(
                         raw_claim_text=raw_claim,
-                        elements=[
-                            ClaimElement(
-                                element_id="el-fallback",
-                                text=raw_claim,
-                                element_type="structural",
-                            )
-                        ],
+                        elements=[ClaimElement(element_id="el-fallback", text=raw_claim, element_type="structural")]
                     )
+            finally:
+                executor.shutdown(wait=False)
 
         return DecomposedClaim(
             raw_claim_text=raw_claim,
@@ -102,12 +114,24 @@ class QueryUnderstandingPipeline:
     def generate_hyde_for_element(self, element: ClaimElement) -> str:
         prompt = ChatPromptTemplate.from_template(HYDE_PROMPT)
         chain = prompt | self.hyde_llm
-        try:
-            response = chain.invoke({"element_text": element.text, "element_type": element.element_type})
-            return response.content
-        except Exception as e:
-            logger.warning(f"HyDE API Error (possibly quota limits): {e}")
-            return ""
+        total_attempts = len(get_all_keys()) or 1
+        for attempt in range(total_attempts):
+            try:
+                response = chain.invoke({"element_text": element.text, "element_type": element.element_type})
+                return response.content
+            except Exception as e:
+                logger.warning(f"HyDE API Error: {e}")
+                error_str = str(e).lower()
+                if "429" in error_str or "quota" in error_str or "resourceexhausted" in error_str:
+                    if attempt < total_attempts - 1:
+                        logger.warning("Quota hit, rotating key for HyDE generation...")
+                        failed_key = self.hyde_llm.google_api_key.get_secret_value() if hasattr(self.hyde_llm.google_api_key, 'get_secret_value') else self.hyde_llm.google_api_key
+                        rotate_api_key(failed_key)
+                        self.hyde_llm = ChatGoogleGenerativeAI(google_api_key=get_current_api_key(), model="gemini-flash-latest", temperature=0.7, request_timeout=10.0, max_retries=0)
+                        chain = prompt | self.hyde_llm
+                        continue
+                return ""
+        return ""
 
     def process_claim(self, raw_claim: str) -> DecomposedClaim:
         logger.info("Starting claim decomposition...")
@@ -116,18 +140,22 @@ class QueryUnderstandingPipeline:
 
         logger.info(f"Decomposed into {len(decomposed.elements)} elements. Generating HyDE passages...")
         # Step 2: Generate HyDE passages
-        # DECISION LOG: Element-level HyDE vs Whole-claim HyDE.
-        # We choose Element-level HyDE here because it allows for finer-grained dense retrieval
-        # on specific technical limitations, avoiding the "lost in the middle" problem of long
-        # whole-claim passages. This costs more LLM calls but improves recall on paraphrased elements.
+        
+        # Fast fail: If decomposition fell back, don't waste time trying HyDE
+        if len(decomposed.elements) == 1 and decomposed.elements[0].element_id == "el-fallback":
+            logger.info("Skipping HyDE generation for fallback element.")
+            return decomposed
         
         def generate_hyde(element):
             hyde_passage = self.generate_hyde_for_element(element)
             element.hyde_passage = hyde_passage
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-            futures = [executor.submit(generate_hyde, element) for element in decomposed.elements]
-            concurrent.futures.wait(futures)
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
+        futures = [executor.submit(generate_hyde, element) for element in decomposed.elements]
+        try:
+            concurrent.futures.wait(futures, timeout=30.0)
+        finally:
+            executor.shutdown(wait=False)
 
         logger.info("Query understanding complete.")
         return decomposed

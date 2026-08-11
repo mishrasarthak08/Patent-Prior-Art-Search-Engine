@@ -34,7 +34,9 @@ class ExplanationGenerator:
     def __init__(self):
         self.llm = ChatGoogleGenerativeAI(
             google_api_key=get_current_api_key(),  # type: ignore
-            model="gemini-flash-latest", temperature=0, max_retries=0
+            model="gemini-flash-latest",
+            temperature=0,
+            max_retries=0,
         )  # type: ignore
         self.prompt = ChatPromptTemplate.from_template(EXPLANATION_PROMPT)
         self.chain = self.prompt | self.llm

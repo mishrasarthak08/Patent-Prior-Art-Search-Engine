@@ -21,7 +21,8 @@ class DenseRetriever:
             self.client = QdrantClient(host=qdrant_host, port=qdrant_port, api_key=qdrant_api_key, timeout=60)
         self.embeddings = GoogleGenerativeAIEmbeddings(
             google_api_key=get_current_api_key(),  # type: ignore
-            model="models/gemini-embedding-2", task_type="retrieval_query"
+            model="models/gemini-embedding-2",
+            task_type="retrieval_query",
         )  # type: ignore
 
     def search(self, query: str, k: int, filters: dict | None = None) -> list[RetrievedDocument]:

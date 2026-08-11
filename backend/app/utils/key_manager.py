@@ -12,17 +12,18 @@ API_KEYS: list[str] = []
 def init_keys():
     global API_KEYS
     if not API_KEYS:
-        # Check environment first
+        # Load single key
         env_key = os.environ.get("GOOGLE_API_KEY")
         if env_key and env_key not in API_KEYS:
             API_KEYS.append(env_key)
 
-        # User-provided fallback keys
-        additional_keys = ["AIzaSyCCit9ukSeaXAZtl9QVnghyhnKsIQk3e9M", "AIzaSyAC1K0FPNU4zVGImWuY04_7_g5pIHqR3T4"]
-
-        for key in additional_keys:
-            if key not in API_KEYS:
-                API_KEYS.append(key)
+        # Load multiple keys from comma-separated env var
+        multi_keys_str = os.environ.get("GOOGLE_API_KEYS", "")
+        if multi_keys_str:
+            for key in multi_keys_str.split(","):
+                key = key.strip()
+                if key and key not in API_KEYS:
+                    API_KEYS.append(key)
 
 
 def get_current_api_key() -> str:

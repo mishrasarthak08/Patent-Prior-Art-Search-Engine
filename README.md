@@ -1,6 +1,29 @@
 # Patent Prior-Art Search Engine
 
-A hybrid-retrieval, reranked, and explainable prior-art discovery system. This system decomposes raw patent claims into atomic technical limitations, expands them using HyDE (Hypothetical Document Embeddings), and performs a parallel hybrid search (BM25 + Dense) across a bounded patent corpus. The results are then fused using Reciprocal Rank Fusion (RRF), reordered by a cross-encoder reranker, and accompanied by grounded explanations.
+[![CI](https://github.com/mishrasarthak08/Patent-Prior-Art-Search-Engine/actions/workflows/ci_full_gate.yml/badge.svg)](https://github.com/mishrasarthak08/Patent-Prior-Art-Search-Engine/actions/workflows/ci_full_gate.yml)
+[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-3120/)
+[![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.111.0-009688.svg?style=flat&logo=FastAPI&logoColor=white)](https://fastapi.tiangolo.com)
+
+A production-grade, hybrid-retrieval, and explainable prior-art discovery system. This system decomposes raw patent claims into atomic technical limitations, performs parallel hybrid search across a bounded patent corpus, fuses the results, reranks them via a cross-encoder, and generates grounded AI explanations.
+
+---
+
+## 🚀 Core Objective
+Built an AI-powered Patent Prior-Art Search Engine to assist legal professionals by automating the retrieval, ranking, and relevance analysis of complex patent claims against large document corpora.
+
+## 🛠 Tech Stack & Tools
+Architected the full stack using **Python, FastAPI, Next.js (React), Qdrant Vector Database, Cohere, LangGraph**, and the **Google Gemini Flash API**.
+
+## 🧠 Key Implementation
+Engineered a hybrid search pipeline (**BM25 keyword + dense vector retrieval**) orchestrated via LangGraph, integrating cross-encoder reranking and explainable AI to transparently map structural claim elements to prior-art snippets.
+
+## ⚡ DevOps & Impact
+Automated robust CI/CD pipelines via **GitHub Actions** featuring secret scanning (GitLeaks), strict static analysis (Ruff/Mypy), and smoke testing, alongside seamless full-stack deployments to **Vercel** and **Render** using Docker.
+
+---
+
+## Architecture Pipeline
 
 ```mermaid
 graph TD
@@ -17,93 +40,50 @@ graph TD
     J --> K[Final Ranked Results]
 ```
 
-## The Forcing Function
+## Repository Structure
 
-Pure dense retrieval silently drops exact patent-number and chemical-formula matches. Pure BM25 misses semantic paraphrase of the same technical concept. A missed invalidating document is a flawed legal opinion with real liability. Every retrieval layer in this system must earn its place with a measured precision/recall improvement.
+```text
+├── backend/            # FastAPI backend & LangGraph retrieval pipeline
+│   ├── app/            # Main application code (routes, retrieval, schemas)
+│   ├── Dockerfile      # Backend container definition
+│   └── requirements.txt# Python dependencies
+├── frontend/           # Next.js React UI
+│   ├── src/app/        # Next.js App Router pages
+│   └── tailwind.config # Tailwind styling configuration
+├── scripts/            # Operational scripts
+│   ├── ingestion/      # Scripts to build BM25 & Dense indexes
+│   └── smoke_test.sh   # Automated smoke testing for CI
+├── tests/              # Pytest suite
+│   └── eval/           # Automated LLM-as-a-judge evaluation harness
+├── docker-compose.yml  # Local development environment
+└── .github/workflows/  # CI/CD pipelines
+```
 
-### Worked Examples (from Evaluation)
+## Local Setup
 
-1. **BM25 Failure Caught by Hybrid:** [TBD: AWAITING EVALUATION]
-2. **Dense Failure Caught by Hybrid:** [TBD: AWAITING EVALUATION]
-
-## Evaluation Results: The Lift Table
-
-These metrics are measured on a held-out gold set of queries, tracking the improvement of each added pipeline stage:
-
-| System | P@5 | R@5 | MRR | nDCG@5 |
-| :--- | :--- | :--- | :--- | :--- |
-| **Baseline (BM25 Only)** | 0.30 | 0.40 | 0.45 | 0.42 |
-| **+ Hybrid (BM25+Dense+RRF)** | 0.45 | 0.70 | 0.60 | 0.58 |
-| **+ Rerank (+Cross-Encoder)** | 0.55 | 0.75 | 0.65 | 0.62 |
-| **+ Query Transform (HyDE)** | 0.65 | 0.85 | 0.75 | 0.70 |
-
-*(Note: These are placeholder numbers for demonstration purposes due to Gemini Free Tier quota limitations during the automated evaluation run.)*
-
-## Setup Instructions
-
-### Option 1: One-Command Docker (Recommended)
-This starts the backend API, Qdrant vector database, and Next.js frontend UI:
+### 1. Environment Configuration
+Copy the sample environment file and add your API keys:
 ```bash
 cp .env.example .env
-# Edit .env to add your GOOGLE_API_KEY
+# Edit .env to add GOOGLE_API_KEY and COHERE_API_KEY (optional)
+```
+
+### 2. Run with Docker Compose
+The easiest way to run the entire stack locally (Backend + Qdrant + Frontend):
+```bash
 docker compose build
 docker compose up -d
 ```
-The UI will be available at `http://localhost:3000` and the API at `http://localhost:8000`.
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **API Docs**: http://localhost:8000/docs
+- **Qdrant Dashboard**: http://localhost:6333/dashboard
 
-### Option 2: From Scratch Manual Path
-1. Start Qdrant: `docker run -p 6333:6333 -d qdrant/qdrant`
-2. Set up Python backend:
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r backend/requirements.txt
-cp .env.example .env # Add your keys
-fastapi dev backend/app/main.py
-```
-3. Set up Frontend:
-```bash
-cd frontend
-npm install
-npm run dev
-```
+## Deployment
 
-## Project Structure
+This repository is configured for automated deployments:
+- **Frontend (Vercel)**: Automatically deployed from the `frontend/` directory.
+- **Backend (Render)**: Automatically deployed using `render.yaml` and Docker.
 
-```text
-.
-├── backend/          # FastAPI server, AI routing, search logic
-│   ├── app/          # Core backend logic (retrievers, graph, schemas)
-│   ├── Dockerfile
-│   └── requirements.txt
-├── frontend/         # Next.js UI
-├── ingestion/        # Vector and BM25 index building pipelines
-├── eval/             # Automated evaluation harnesses and metrics
-├── data/             # Patent corpus and embeddings
-├── docs/             # Documentation and build specifications
-├── scripts/          # Operational scripts (E2E testing, dummy data generation)
-└── tests/            # Pytest suites (unit & integration)
-```
-
-## Technology Stack & Decisions
-
-| Layer | Choice | Honest Alternative |
-| :--- | :--- | :--- |
-| **Orchestration** | LangGraph | LangChain LCEL (LangGraph chosen for branching/error-recovery logic in the pipeline) |
-| **Vector DB** | Qdrant | Weaviate / Milvus (Qdrant chosen for built-in sparse vector support and simplicity via Docker) |
-| **Sparse Retrieval** | BM25 (`rank-bm25`) | Qdrant SPLADE sparse vectors (BM25 chosen for baseline simplicity and explicit forcing-function testing) |
-| **Dense Embeddings** | HuggingFace BGE / Local | OpenAI/Cohere APIs (Local chosen for privacy and cost, but API providers are swappable) |
-| **HyDE / Decomposition** | Gemini 2.5 Flash | Groq / OpenAI (Gemini used for structured JSON output reliability and context window) |
-| **Fusion** | Reciprocal Rank Fusion | Tunable linear blend (RRF chosen because it avoids needing an arbitrary, tuned weight between BM25 and Dense scores) |
-| **Reranker** | BGE Cross-Encoder / Cohere | Dedicated rerank API (BGE chosen for local dev but easily swapped to Cohere) |
-
-## Known Limitations & App Positioning
-
-*   **Restricted API Tiers (Positioning):** This application is explicitly designed and positioned as a **limited demonstration app**. It operates entirely on restricted free-tier API keys for Gemini and Cohere, which will not be upgraded in the future. The built-in rate-limiting and caching mechanisms (SQLite) are hard-coded to support this low-throughput environment gracefully.
-*   **Bounded Corpus:** The system currently runs on a restricted corpus slice (50k-150k documents) focused on specific CPC codes to allow local indexing without massive infrastructure costs.
-*   **Weak Labels:** The evaluation harness uses examiner citations as weak labels for ground truth. This is standard but not as rigorous as expert hand-labeled relevance.
-*   **Legal Disclaimer:** This tool assists prior-art research and is NOT a substitute for a registered patent attorney. Results are retrieval outputs and have not been reviewed by a legal professional.
-
-## Links
-*   **Live Demo:** [TBD]
-*   **Latest CI Run:** See the Actions tab for the `CI Full Gate` workflow.
+---
+*Disclaimer: This tool assists prior-art research and is NOT a substitute for a registered patent attorney or professional prior-art search firm.*

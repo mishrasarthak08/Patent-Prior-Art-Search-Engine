@@ -2,12 +2,21 @@
 .env
 *.key
 *.json
-!eval/citation_pairs.json
-!eval/gold_set.json
-!eval/results/*.json
+!tests/eval/citation_pairs.json
+!tests/eval/gold_set.json
+!tests/eval/results/*.json
 !package.json
 !package-lock.json
 !tsconfig.json
+
+# Databases & Caches
+.langchain.db
+data/corpus/*.pkl
+.ruff_cache/
+.mypy_cache/
+
+# OS Files
+.DS_Store
 
 # Docker Volumes
 qdrant_data/

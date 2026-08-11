@@ -38,8 +38,8 @@ Hypothetical Prior Art Passage:
 class QueryUnderstandingPipeline:
     def __init__(self):
         # Using Gemini. The prompt structure expects structured JSON fallback or native function calling.
-        self.llm = ChatGoogleGenerativeAI(google_api_key=get_current_api_key(), model="gemini-flash-latest", temperature=0, request_timeout=15.0, max_retries=0)
-        self.hyde_llm = ChatGoogleGenerativeAI(google_api_key=get_current_api_key(), model="gemini-flash-latest", temperature=0.7, request_timeout=10.0, max_retries=0)
+        self.llm = ChatGoogleGenerativeAI(google_api_key=get_current_api_key(), model="gemini-flash-latest", temperature=0, request_timeout=15.0, max_retries=0)  # type: ignore
+        self.hyde_llm = ChatGoogleGenerativeAI(google_api_key=get_current_api_key(), model="gemini-flash-latest", temperature=0.7, request_timeout=10.0, max_retries=0)  # type: ignore
 
         self.decomposition_parser = PydanticOutputParser(pydantic_object=DecomposedClaim)
         self.decomposition_prompt = ChatPromptTemplate.from_messages(
@@ -94,7 +94,7 @@ class QueryUnderstandingPipeline:
                         logger.warning("Quota hit, rotating key for decomposition...")
                         failed_key = self.llm.google_api_key.get_secret_value() if hasattr(self.llm.google_api_key, 'get_secret_value') else self.llm.google_api_key
                         rotate_api_key(failed_key)
-                        self.llm = ChatGoogleGenerativeAI(google_api_key=get_current_api_key(), model="gemini-flash-latest", temperature=0, request_timeout=15.0, max_retries=0)
+                        self.llm = ChatGoogleGenerativeAI(google_api_key=get_current_api_key(), model="gemini-flash-latest", temperature=0, request_timeout=15.0, max_retries=0)  # type: ignore
                         chain = self.decomposition_prompt | self.llm | self.decomposition_parser
                         continue
                 if attempt == total_attempts - 1:
@@ -127,7 +127,7 @@ class QueryUnderstandingPipeline:
                         logger.warning("Quota hit, rotating key for HyDE generation...")
                         failed_key = self.hyde_llm.google_api_key.get_secret_value() if hasattr(self.hyde_llm.google_api_key, 'get_secret_value') else self.hyde_llm.google_api_key
                         rotate_api_key(failed_key)
-                        self.hyde_llm = ChatGoogleGenerativeAI(google_api_key=get_current_api_key(), model="gemini-flash-latest", temperature=0.7, request_timeout=10.0, max_retries=0)
+                        self.hyde_llm = ChatGoogleGenerativeAI(google_api_key=get_current_api_key(), model="gemini-flash-latest", temperature=0.7, request_timeout=10.0, max_retries=0)  # type: ignore
                         chain = prompt | self.hyde_llm
                         continue
                 return ""

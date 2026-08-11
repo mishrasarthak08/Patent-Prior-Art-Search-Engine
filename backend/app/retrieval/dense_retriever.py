@@ -4,7 +4,7 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from qdrant_client import QdrantClient
 
 from backend.app.schemas import RetrievedDocument
-from backend.app.utils.key_manager import get_current_api_key, rotate_api_key, get_all_keys
+from backend.app.utils.key_manager import get_current_api_key, rotate_api_key, get_all_keys  # type: ignore
 
 
 class DenseRetriever:
@@ -47,9 +47,9 @@ class DenseRetriever:
                 if "429" in error_str or "quota" in error_str or "resourceexhausted" in error_str:
                     if attempt < total_attempts - 1:
                         logger.warning("Quota hit, rotating key for embeddings...")
-                        failed_key = self.embeddings.google_api_key.get_secret_value() if hasattr(self.embeddings.google_api_key, 'get_secret_value') else self.embeddings.google_api_key
-                        rotate_api_key(failed_key)
-                        self.embeddings = GoogleGenerativeAIEmbeddings(google_api_key=get_current_api_key(), model="models/gemini-embedding-2", task_type="retrieval_query")
+                        failed_key = self.embeddings.google_api_key.get_secret_value() if hasattr(self.embeddings.google_api_key, 'get_secret_value') else self.embeddings.google_api_key  # type: ignore
+                        rotate_api_key(failed_key)  # type: ignore
+                        self.embeddings = GoogleGenerativeAIEmbeddings(google_api_key=get_current_api_key(), model="models/gemini-embedding-2", task_type="retrieval_query")  # type: ignore
                         continue
                 logger.error(
                     "Embedding generation failed: %s. Falling back to empty dense results.",

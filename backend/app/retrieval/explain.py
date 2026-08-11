@@ -32,7 +32,7 @@ Provide a short, 1-2 sentence explanation:
 
 class ExplanationGenerator:
     def __init__(self):
-        self.llm = ChatGoogleGenerativeAI(google_api_key=get_current_api_key(), model="gemini-flash-latest", temperature=0, max_retries=0)
+        self.llm = ChatGoogleGenerativeAI(google_api_key=get_current_api_key(), model="gemini-flash-latest", temperature=0, max_retries=0)  # type: ignore
         self.prompt = ChatPromptTemplate.from_template(EXPLANATION_PROMPT)
         self.chain = self.prompt | self.llm
 
@@ -69,7 +69,7 @@ class ExplanationGenerator:
                         logger.warning("Quota hit, rotating key for explanation...")
                         failed_key = self.llm.google_api_key.get_secret_value() if hasattr(self.llm.google_api_key, 'get_secret_value') else self.llm.google_api_key
                         rotate_api_key(failed_key)
-                        self.llm = ChatGoogleGenerativeAI(google_api_key=get_current_api_key(), model="gemini-flash-latest", temperature=0, max_retries=0)
+                        self.llm = ChatGoogleGenerativeAI(google_api_key=get_current_api_key(), model="gemini-flash-latest", temperature=0, max_retries=0)  # type: ignore
                         self.chain = self.prompt | self.llm
                         continue
                     return "Explanation omitted due to API quota limits across all keys."

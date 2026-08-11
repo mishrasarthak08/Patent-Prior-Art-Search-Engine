@@ -31,6 +31,7 @@ class BM25Retriever:
                 self.doc_ids = data["doc_ids"]
 
         from qdrant_client import QdrantClient
+
         qdrant_host = os.environ.get("QDRANT_HOST", "localhost")
         qdrant_port = int(os.environ.get("QDRANT_PORT", "6333"))
         qdrant_url = os.environ.get("QDRANT_URL")
@@ -65,19 +66,17 @@ class BM25Retriever:
         # Hydrate with Qdrant payloads
         doc_ids_to_fetch = [info["doc_id"] for info in top_docs_info]
         try:
-            from qdrant_client.http.models import Filter, FieldCondition, MatchAny
+            from qdrant_client.http.models import FieldCondition, Filter, MatchAny
+
             scroll_res, _ = self.client.scroll(
                 collection_name=self.collection_name,
-                scroll_filter=Filter(
-                    must=[
-                        FieldCondition(key="doc_id", match=MatchAny(any=doc_ids_to_fetch))
-                    ]
-                ),
-                limit=100
+                scroll_filter=Filter(must=[FieldCondition(key="doc_id", match=MatchAny(any=doc_ids_to_fetch))]),
+                limit=100,
             )
-            payload_map = {point.payload.get("doc_id"): point.payload for point in scroll_res}
+            payload_map = {point.payload.get("doc_id"): point.payload for point in scroll_res}  # type: ignore
         except Exception as e:
             import logging
+
             logging.error(f"Failed to fetch payloads in BM25: {e}")
             payload_map = {}
 
@@ -85,12 +84,12 @@ class BM25Retriever:
         for info in top_docs_info:
             doc_id = info["doc_id"]
             payload = payload_map.get(doc_id, {})
-            text = payload.get("text", "")
-            
+            text = payload.get("text", "")  # type: ignore
+
             doc = RetrievedDocument(
                 doc_id=str(doc_id),
-                title=payload.get("title") or f"Patent Document {doc_id}",
-                snippet=payload.get("snippet") or (text[:250] + "..." if text else "Snippet not found."),
+                title=payload.get("title") or f"Patent Document {doc_id}",  # type: ignore
+                snippet=payload.get("snippet") or (text[:250] + "..." if text else "Snippet not found."),  # type: ignore
                 retrieval_sources=["bm25"],
                 raw_scores={"bm25": float(info["score"])},
                 fused_score=0.0,

@@ -20,7 +20,8 @@ class DenseRetriever:
         else:
             self.client = QdrantClient(host=qdrant_host, port=qdrant_port, api_key=qdrant_api_key, timeout=60)
         self.embeddings = GoogleGenerativeAIEmbeddings(
-            google_api_key=get_current_api_key(), model="models/gemini-embedding-2", task_type="retrieval_query"
+            google_api_key=get_current_api_key(),  # type: ignore
+            model="models/gemini-embedding-2", task_type="retrieval_query"
         )  # type: ignore
 
     def search(self, query: str, k: int, filters: dict | None = None) -> list[RetrievedDocument]:
@@ -51,13 +52,13 @@ class DenseRetriever:
                     if attempt < total_attempts - 1:
                         logger.warning("Quota hit, rotating key for embeddings...")
                         failed_key = (
-                            self.embeddings.google_api_key.get_secret_value()
+                            self.embeddings.google_api_key.get_secret_value()  # type: ignore
                             if hasattr(self.embeddings.google_api_key, "get_secret_value")
                             else self.embeddings.google_api_key
                         )  # type: ignore
                         rotate_api_key(failed_key)  # type: ignore
                         self.embeddings = GoogleGenerativeAIEmbeddings(
-                            google_api_key=get_current_api_key(),
+                            google_api_key=get_current_api_key(),  # type: ignore
                             model="models/gemini-embedding-2",
                             task_type="retrieval_query",
                         )  # type: ignore

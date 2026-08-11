@@ -33,7 +33,8 @@ Provide a short, 1-2 sentence explanation:
 class ExplanationGenerator:
     def __init__(self):
         self.llm = ChatGoogleGenerativeAI(
-            google_api_key=get_current_api_key(), model="gemini-flash-latest", temperature=0, max_retries=0
+            google_api_key=get_current_api_key(),  # type: ignore
+            model="gemini-flash-latest", temperature=0, max_retries=0
         )  # type: ignore
         self.prompt = ChatPromptTemplate.from_template(EXPLANATION_PROMPT)
         self.chain = self.prompt | self.llm
@@ -76,7 +77,7 @@ class ExplanationGenerator:
                         )
                         rotate_api_key(failed_key)
                         self.llm = ChatGoogleGenerativeAI(
-                            google_api_key=get_current_api_key(),
+                            google_api_key=get_current_api_key(),  # type: ignore
                             model="gemini-flash-latest",
                             temperature=0,
                             max_retries=0,

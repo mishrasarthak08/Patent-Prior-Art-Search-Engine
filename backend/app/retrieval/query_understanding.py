@@ -39,14 +39,14 @@ class QueryUnderstandingPipeline:
     def __init__(self):
         # Using Gemini. The prompt structure expects structured JSON fallback or native function calling.
         self.llm = ChatGoogleGenerativeAI(
-            google_api_key=get_current_api_key(),
+            google_api_key=get_current_api_key(),  # type: ignore
             model="gemini-flash-latest",
             temperature=0,
             request_timeout=15.0,
             max_retries=0,
         )  # type: ignore
         self.hyde_llm = ChatGoogleGenerativeAI(
-            google_api_key=get_current_api_key(),
+            google_api_key=get_current_api_key(),  # type: ignore
             model="gemini-flash-latest",
             temperature=0.7,
             request_timeout=10.0,
@@ -111,7 +111,7 @@ class QueryUnderstandingPipeline:
                         )
                         rotate_api_key(failed_key)
                         self.llm = ChatGoogleGenerativeAI(
-                            google_api_key=get_current_api_key(),
+                            google_api_key=get_current_api_key(),  # type: ignore
                             model="gemini-flash-latest",
                             temperature=0,
                             request_timeout=15.0,
@@ -154,7 +154,7 @@ class QueryUnderstandingPipeline:
                         )
                         rotate_api_key(failed_key)
                         self.hyde_llm = ChatGoogleGenerativeAI(
-                            google_api_key=get_current_api_key(),
+                            google_api_key=get_current_api_key(),  # type: ignore
                             model="gemini-flash-latest",
                             temperature=0.7,
                             request_timeout=10.0,

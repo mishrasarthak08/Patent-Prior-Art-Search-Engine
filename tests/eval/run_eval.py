@@ -3,7 +3,7 @@ import json
 import os
 import time
 
-from eval.harness import EvaluationHarness
+from tests.eval.harness import EvaluationHarness
 
 
 def generate_synthetic_data():

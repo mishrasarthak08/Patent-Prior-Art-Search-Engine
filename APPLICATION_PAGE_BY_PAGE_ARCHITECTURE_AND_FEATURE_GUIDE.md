@@ -554,3 +554,4 @@ Every route and feature in the **Patent Prior-Art Search Engine** is deliberatel
 
 ---
 *Documentation current as of November 2026. Aligned with production codebase release 2.4.0.*
+

@@ -14,7 +14,13 @@ engine_kwargs = {
     "pool_pre_ping": True,
 }
 
-if settings.DATABASE_URL.startswith("sqlite"):
+db_url = settings.DATABASE_URL
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql+psycopg://", 1)
+elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+"):
+    db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+
+if db_url.startswith("sqlite"):
     connect_args = {"check_same_thread": False}
     engine_kwargs["connect_args"] = connect_args
 else:
@@ -25,7 +31,7 @@ else:
     engine_kwargs["pool_timeout"] = 30
 
 engine = create_engine(
-    settings.DATABASE_URL,
+    db_url,
     **engine_kwargs,
 )
 
@@ -44,6 +50,25 @@ def get_db():
 def init_db():
     from backend.app.db.models import Base as ModelsBase
     ModelsBase.metadata.create_all(bind=engine)
+
+    # In PostgreSQL, automatically apply kernel-level Row Level Security policies
+    if engine.dialect.name == "postgresql":
+        rls_sql_path = os.path.join(os.path.dirname(__file__), "postgresql_rls.sql")
+        if os.path.exists(rls_sql_path):
+            try:
+                from sqlalchemy import text
+                with engine.begin() as conn:
+                    with open(rls_sql_path, "r", encoding="utf-8") as f:
+                        sql_content = f.read()
+                    for stmt in sql_content.split(";"):
+                        stmt_clean = stmt.strip()
+                        if stmt_clean:
+                            try:
+                                conn.execute(text(stmt_clean))
+                            except Exception:
+                                pass
+            except Exception:
+                pass
     # Check and run lightweight SQLite column migrations if needed
     if settings.DATABASE_URL.startswith("sqlite"):
         import sqlite3

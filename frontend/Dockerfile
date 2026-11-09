@@ -15,6 +15,6 @@ COPY . .
 RUN npm run build
 
 # Start the application
-CMD ["npm", "start"]
+CMD ["sh", "-c", "npm start -- -p ${PORT:-3000}"]
 
 EXPOSE 3000

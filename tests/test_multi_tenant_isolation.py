@@ -474,3 +474,94 @@ def test_platform_admin_support_session_lifecycle():
     assert post_term_probe.status_code == 403
 
 
+def test_matter_level_ethical_wall_isolation():
+    """
+    Law firm ethical wall verification:
+    Within the SAME organization workspace, confidential matters cannot be accessed
+    by other firm attorneys unless explicitly enrolled as matter members.
+    """
+    # 1. Register Partner A (firm administrator)
+    res_a = client.post("/api/v1/auth/register", json={
+        "email": f"partner_a_{uuid.uuid4().hex[:6]}@lawfirm.example.com",
+        "password": "FirmPassword2026!",
+        "full_name": "Partner Alice",
+        "organization_name": "Apex IP Law LLP",
+    })
+    assert res_a.status_code == 200
+    token_a = res_a.json()["access_token"]
+    user_a_id = res_a.json()["user"]["id"]
+    headers_auth_a = {"Authorization": f"Bearer {token_a}"}
+
+    # Retrieve Alice's organization workspace
+    ws_list_a = client.get("/api/v1/workspaces", headers=headers_auth_a).json()
+    org_ws = next((w for w in ws_list_a if w["workspace_type"] == "ORGANIZATION"), None)
+    assert org_ws is not None, "Organization workspace must be provisioned"
+    ws_firm_id = org_ws["id"]
+    headers_a = {"Authorization": f"Bearer {token_a}", "X-Workspace-Id": ws_firm_id}
+
+    # 2. Partner A invites Associate Bob to the law firm organization
+    bob_email = f"attorney_b_{uuid.uuid4().hex[:6]}@lawfirm.example.com"
+    invite_res = client.post("/api/v1/organization/invite", json={
+        "email": bob_email,
+        "role": "ANALYST",
+    }, headers=headers_a)
+    assert invite_res.status_code == 200
+    user_b_id = invite_res.json()["user_id"]
+
+    # Bob logs into the platform
+    login_b = client.post("/api/v1/auth/login", json={"email": bob_email, "password": "patent2026"})
+    assert login_b.status_code == 200
+    token_b = login_b.json()["access_token"]
+    headers_b = {"Authorization": f"Bearer {token_b}", "X-Workspace-Id": ws_firm_id}
+
+    # 3. Partner A creates a confidential matter for Client Alphabet
+    create_matter_res = client.post("/api/v1/matters", json={
+        "name": "Project Titan Autonomous Battery",
+        "matter_number": "FIRM-2026-TITAN",
+        "client_name": "Confidential Auto Client",
+        "jurisdiction": "US",
+        "technical_domain": "Solid-State Batteries",
+        "is_confidential": True,
+        "notes": "Strict ethical wall: conflicting automotive representation active.",
+    }, headers=headers_a)
+    assert create_matter_res.status_code == 200
+    matter_id = create_matter_res.json()["id"]
+
+    # 4. Attorney B lists matters in the same workspace -> Confidential matter MUST NOT appear
+    b_list = client.get("/api/v1/matters", headers=headers_b)
+    assert b_list.status_code == 200
+    assert not any(m["id"] == matter_id for m in b_list.json())
+
+    # 5. Attorney B probes direct ID access -> 403 Forbidden
+    b_probe = client.get(f"/api/v1/matters/{matter_id}", headers=headers_b)
+    assert b_probe.status_code == 403
+    assert "Ethical Wall" in b_probe.json()["detail"]
+
+    # 6. Partner A adds Attorney B to the matter
+    add_b_to_matter = client.post(f"/api/v1/matters/{matter_id}/members", json={
+        "user_id": user_b_id,
+        "role": "ATTORNEY",
+    }, headers=headers_a)
+    assert add_b_to_matter.status_code == 200
+    assert add_b_to_matter.json()["user_id"] == user_b_id
+
+    # 7. Attorney B lists matters -> Now visible!
+    b_list_after = client.get("/api/v1/matters", headers=headers_b)
+    assert b_list_after.status_code == 200
+    assert any(m["id"] == matter_id for m in b_list_after.json())
+
+    # 8. Attorney B accesses matter details -> 200 OK
+    b_access = client.get(f"/api/v1/matters/{matter_id}", headers=headers_b)
+    assert b_access.status_code == 200
+    assert b_access.json()["name"] == "Project Titan Autonomous Battery"
+
+    # 9. Partner A removes Attorney B from matter
+    del_res = client.delete(f"/api/v1/matters/{matter_id}/members/{user_b_id}", headers=headers_a)
+    assert del_res.status_code == 200
+
+    # 10. Attorney B direct access is immediately barred again -> 403 Forbidden
+    b_barred = client.get(f"/api/v1/matters/{matter_id}", headers=headers_b)
+    assert b_barred.status_code == 403
+
+
+

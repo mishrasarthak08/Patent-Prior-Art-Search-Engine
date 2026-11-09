@@ -48,6 +48,7 @@ from backend.app.db.models import (
     Organization,
     PatentDocument,
     Project,
+    ProjectMember,
     QuarantineRecord,
     SavedDocument,
     SearchExecution,
@@ -75,6 +76,8 @@ from backend.app.schemas import (
     EvidenceUpdate,
     IterativeSearchRequest,
     MatterCreate,
+    MatterMemberAdd,
+    MatterMemberOut,
     MatterOut,
     MatterUpdate,
     MultiClaimMapCell,
@@ -833,7 +836,14 @@ def list_matters(
 
     projects = query.order_by(Project.updated_at.desc()).all()
     results = []
+    is_admin = getattr(user, "is_platform_admin", False)
     for p in projects:
+        # Ethical Wall: Filter out confidential matters if caller is not an assigned member or creator
+        if p.is_confidential and not is_admin:
+            member_ids = [m.user_id for m in p.members]
+            if user.id not in member_ids and user.id != p.created_by_user_id and user.id != p.assigned_to_user_id:
+                continue
+
         m = MatterOut.model_validate(p)
         m.searches_count = len(p.searches)
         m.saved_documents_count = len(getattr(p, "saved_documents", []))
@@ -866,11 +876,24 @@ def create_matter(
         jurisdiction=req.jurisdiction,
         technical_domain=req.technical_domain,
         assigned_to_user_id=user.id,
+        created_by_user_id=user.id,
+        is_confidential=bool(req.is_confidential),
         notes=req.notes,
     )
     db.add(new_proj)
+    db.flush()
+
+    # Automatically enroll creator as OWNER member of this matter
+    pmem = ProjectMember(
+        id=str(uuid.uuid4()),
+        project_id=new_proj.id,
+        user_id=user.id,
+        role="OWNER",
+    )
+    db.add(pmem)
     db.commit()
-    log_audit_event(db, user, "CREATE_MATTER", "Matter", str(new_proj.id), {"matter_number": req.matter_number})
+
+    log_audit_event(db, user, "CREATE_MATTER", "Matter", str(new_proj.id), {"matter_number": req.matter_number, "is_confidential": req.is_confidential})
     m = MatterOut.model_validate(new_proj)
     m.searches_count = 0
     m.saved_documents_count = 0
@@ -902,6 +925,15 @@ def get_matter_details(
         if not has_access and (not user.org_id or project.org_id != user.org_id):
             raise HTTPException(status_code=404, detail="Matter not found")
 
+    # Ethical Wall Check: if confidential matter, only assigned members or creator have access
+    if project.is_confidential and not getattr(user, "is_platform_admin", False):
+        member_ids = [m.user_id for m in project.members]
+        if user.id not in member_ids and user.id != project.created_by_user_id and user.id != project.assigned_to_user_id:
+            raise HTTPException(
+                status_code=403,
+                detail="Access Denied: Ethical Wall restricted matter. You must be explicitly assigned to this matter.",
+            )
+
     searches = (
         db.query(SearchExecution)
         .filter(SearchExecution.project_id == project_id)
@@ -919,6 +951,8 @@ def get_matter_details(
         "status": project.status or "ACTIVE",
         "jurisdiction": project.jurisdiction,
         "technical_domain": project.technical_domain,
+        "is_confidential": bool(project.is_confidential),
+        "created_by_user_id": project.created_by_user_id,
         "notes": project.notes,
         "created_at": project.created_at.isoformat() if project.created_at else None,
         "searches": [
@@ -941,7 +975,130 @@ def get_matter_details(
             }
             for sd in saved_docs
         ],
+        "members": [
+            {
+                "id": m.id,
+                "user_id": m.user_id,
+                "role": m.role,
+                "email": m.user.email if m.user else None,
+                "name": m.user.full_name if m.user else None,
+            }
+            for m in project.members
+        ],
     }
+
+
+@app.get("/api/v1/matters/{project_id}/members", response_model=list[MatterMemberOut])
+def list_matter_members(
+    project_id: str,
+    user: User = Depends(get_authenticated_user),
+    active_workspace: Workspace = Depends(get_active_workspace),
+    db: Session = Depends(get_db),
+):
+    project = db.query(Project).filter(Project.id == project_id, Project.workspace_id == active_workspace.id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Matter not found")
+
+    if project.is_confidential and not getattr(user, "is_platform_admin", False):
+        member_ids = [m.user_id for m in project.members]
+        if user.id not in member_ids and user.id != project.created_by_user_id and user.id != project.assigned_to_user_id:
+            raise HTTPException(status_code=403, detail="Forbidden: Ethical wall restricts member inspection")
+
+    results = []
+    for m in project.members:
+        results.append(
+            MatterMemberOut(
+                id=m.id,
+                project_id=m.project_id,
+                user_id=m.user_id,
+                role=m.role,
+                user_email=m.user.email if m.user else None,
+                user_name=m.user.full_name if m.user else None,
+                created_at=m.created_at,
+            )
+        )
+    return results
+
+
+@app.post("/api/v1/matters/{project_id}/members", response_model=MatterMemberOut)
+def add_matter_member(
+    project_id: str,
+    req: MatterMemberAdd,
+    user: User = Depends(get_authenticated_user),
+    active_workspace: Workspace = Depends(get_active_workspace),
+    db: Session = Depends(get_db),
+):
+    project = db.query(Project).filter(Project.id == project_id, Project.workspace_id == active_workspace.id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Matter not found")
+
+    member_ids = [m.user_id for m in project.members if m.role == "OWNER"]
+    is_owner = user.id in member_ids or user.id == project.created_by_user_id or getattr(user, "is_platform_admin", False)
+    if not is_owner:
+        role = get_effective_workspace_role(user, active_workspace, db)
+        if role not in ["OWNER", "ADMIN", "PERSONAL_OWNER"]:
+            raise HTTPException(status_code=403, detail="Forbidden: Only matter owner or admin can add team members across ethical walls")
+
+    existing = db.query(ProjectMember).filter(ProjectMember.project_id == project_id, ProjectMember.user_id == req.user_id).first()
+    if existing:
+        existing.role = req.role
+        db.commit()
+        db.refresh(existing)
+        return MatterMemberOut(
+            id=existing.id,
+            project_id=existing.project_id,
+            user_id=existing.user_id,
+            role=existing.role,
+            user_email=existing.user.email if existing.user else None,
+            user_name=existing.user.full_name if existing.user else None,
+            created_at=existing.created_at,
+        )
+
+    pm = ProjectMember(
+        id=str(uuid.uuid4()),
+        project_id=project_id,
+        user_id=req.user_id,
+        role=req.role,
+    )
+    db.add(pm)
+    db.commit()
+    db.refresh(pm)
+    log_audit_event(db, user, "ADD_MATTER_MEMBER", "Matter", project_id, {"target_user_id": req.user_id, "role": req.role})
+    return MatterMemberOut(
+        id=pm.id,
+        project_id=pm.project_id,
+        user_id=pm.user_id,
+        role=pm.role,
+        user_email=pm.user.email if pm.user else None,
+        user_name=pm.user.full_name if pm.user else None,
+        created_at=pm.created_at,
+    )
+
+
+@app.delete("/api/v1/matters/{project_id}/members/{target_user_id}")
+def remove_matter_member(
+    project_id: str,
+    target_user_id: str,
+    user: User = Depends(get_authenticated_user),
+    active_workspace: Workspace = Depends(get_active_workspace),
+    db: Session = Depends(get_db),
+):
+    project = db.query(Project).filter(Project.id == project_id, Project.workspace_id == active_workspace.id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Matter not found")
+
+    member_ids = [m.user_id for m in project.members if m.role == "OWNER"]
+    is_owner = user.id in member_ids or user.id == project.created_by_user_id or getattr(user, "is_platform_admin", False)
+    if not is_owner and user.id != target_user_id:
+        raise HTTPException(status_code=403, detail="Forbidden: Cannot remove member from ethical wall")
+
+    pm = db.query(ProjectMember).filter(ProjectMember.project_id == project_id, ProjectMember.user_id == target_user_id).first()
+    if pm:
+        db.delete(pm)
+        db.commit()
+        log_audit_event(db, user, "REMOVE_MATTER_MEMBER", "Matter", project_id, {"target_user_id": target_user_id})
+
+    return {"status": "success", "message": "Member removed from matter"}
 
 
 @app.patch("/api/v1/matters/{project_id}")
@@ -975,10 +1132,11 @@ def update_matter(
             setattr(project, field_name, val)
 
     setattr(project, "updated_at", datetime.datetime.utcnow())
+    project_id_str = str(project.id)
+    project_status_str = str(project.status)
     db.commit()
-    db.refresh(project)
-    log_audit_event(db, user, "UPDATE_MATTER", "Matter", str(project.id), {"status": str(project.status)})
-    return {"status": "updated", "id": str(project.id), "matter_status": str(project.status)}
+    log_audit_event(db, user, "UPDATE_MATTER", "Matter", project_id_str, {"status": project_status_str})
+    return {"status": "updated", "id": project_id_str, "matter_status": project_status_str}
 
 
 @app.delete("/api/v1/matters/{project_id}")

@@ -202,40 +202,33 @@ export default function AppLayout({
 
   const navSections = [
     {
-      title: "RESEARCH",
+      title: "RESEARCH WORKSPACE",
       items: [
         { label: "Overview", href: "/app", icon: Home },
-        { label: "Prior-Art Search", href: "/app/search", icon: Search },
-        { label: "Legal Matters", href: "/app/matters", icon: Briefcase },
-        { label: "Dossier Studio", href: "/app/dossier", icon: FileText },
+        { label: "Investigations", href: "/app/search", icon: Search },
+        { label: "Matters & Dockets", href: "/app/matters", icon: Briefcase },
+        { label: "Claim Charts", href: "/app/claim-charts", icon: FileCheck },
+        { label: "Saved References", href: "/app/saved", icon: Bookmark },
+        { label: "Research Reports", href: "/app/dossier", icon: FileText },
       ],
     },
     {
-      title: "DISCOVERY & GRAPH",
+      title: "RESEARCH TOOLS",
       items: [
-        { label: "Corpus Coverage", href: "/app/corpus", icon: Layers },
-        { label: "Knowledge Graph", href: "/app/graph", icon: Share2 },
         { label: "Patent Explorer", href: "/app/explorer", icon: Layers },
-        { label: "Saved Publications", href: "/app/saved", icon: Bookmark },
+        { label: "Document Comparison", href: "/app/compare", icon: GitCompare },
       ],
     },
     {
-      title: "EVIDENCE & CHARTS",
-      items: [
-        { label: "Evidence Claim Charts", href: "/app/claim-charts", icon: FileCheck },
-        { label: "Comparative Claim Matrix", href: "/app/claim-map", icon: FileCheck },
-        { label: "Patent Comparison", href: "/app/compare", icon: GitCompare },
-      ],
-    },
-    {
-      title: "ORGANIZATION & GOVERNANCE",
+      title: "WORKSPACE MANAGEMENT",
       items: [
         ...(isOwnerOrAdmin
-          ? [{ label: "Research Eval Lab", href: "/app/eval-lab", icon: Activity }]
+          ? [{ label: "Team & Permissions", href: "/app/team", icon: Users }]
           : []),
-        { label: "Team & Seats", href: "/app/team", icon: Users },
-        { label: "Audit Non-Repudiation", href: "/app/audit", icon: Shield },
-        { label: "Platform Settings", href: "/app/settings", icon: Settings },
+        ...(isOwnerOrAdmin
+          ? [{ label: "Compliance & Audit", href: "/app/audit", icon: Shield }]
+          : []),
+        { label: "Workspace Settings", href: "/app/settings", icon: Settings },
       ],
     },
   ];

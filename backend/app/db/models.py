@@ -108,6 +108,8 @@ class Project(Base):
     jurisdiction = Column(String(20), default="US")
     technical_domain = Column(String(100), default="General")
     assigned_to_user_id = Column(String(36), ForeignKey("users.id"), nullable=True)
+    created_by_user_id = Column(String(36), ForeignKey("users.id"), nullable=True)
+    is_confidential = Column(Boolean, default=False)  # When True, Ethical Wall is active: strictly restricted to assigned members
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
@@ -116,6 +118,23 @@ class Project(Base):
     workspace = relationship("Workspace", back_populates="matters")
     searches = relationship("SearchExecution", back_populates="project", cascade="all, delete-orphan")
     saved_documents = relationship("SavedDocument", back_populates="project", cascade="all, delete-orphan")
+    members = relationship("ProjectMember", back_populates="project", cascade="all, delete-orphan")
+
+
+class ProjectMember(Base):
+    """Enforces matter-level ethical walls and restricted access control within law firms."""
+
+    __tablename__ = "project_members"
+    __table_args__ = (UniqueConstraint("project_id", "user_id", name="uq_project_user"),)
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    project_id = Column(String(36), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    role = Column(String(50), default="ATTORNEY")  # OWNER, ATTORNEY, REVIEWER, VIEWER
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    project = relationship("Project", back_populates="members")
+    user = relationship("User")
 
 
 class PatentDocument(Base):

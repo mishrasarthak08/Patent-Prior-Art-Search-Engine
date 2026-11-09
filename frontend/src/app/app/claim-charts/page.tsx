@@ -48,6 +48,7 @@ export default function ClaimChartsPage() {
   const [loading, setLoading] = useState(true);
   const [supportFilter, setSupportFilter] = useState("ALL");
   const [searchFilter, setSearchFilter] = useState("");
+  const [viewMode, setViewMode] = useState<"matrix" | "heatmap">("matrix");
   
   const [activeEvidence, setActiveEvidence] = useState<EvidenceRow | null>(null);
   const [editNotes, setEditNotes] = useState("");
@@ -143,13 +144,41 @@ export default function ClaimChartsPage() {
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center bg-[#F1F5F9] p-0.5 rounded-[5px] border border-[#E2E8F0]">
+              <button
+                onClick={() => setViewMode("matrix")}
+                className={`px-3 py-1 text-xs font-semibold rounded-[4px] transition ${
+                  viewMode === "matrix" ? "bg-white text-[#0F172A] shadow-xs" : "text-[#64748B] hover:text-[#0F172A]"
+                }`}
+              >
+                Matrix Table
+              </button>
+              <button
+                onClick={() => setViewMode("heatmap")}
+                className={`px-3 py-1 text-xs font-semibold rounded-[4px] transition ${
+                  viewMode === "heatmap" ? "bg-white text-[#0F172A] shadow-xs" : "text-[#64748B] hover:text-[#0F172A]"
+                }`}
+              >
+                Coverage Heatmap
+              </button>
+            </div>
             <Link
               href="/app/search"
               className="px-3.5 py-1.5 text-xs font-semibold rounded-[5px] bg-[#0F172A] text-white hover:bg-[#1E40AF] shadow-xs transition"
             >
               New Claim Search
             </Link>
+          </div>
+        </div>
+
+        {/* Statutory Legal Guidance Banner */}
+        <div className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[5px] text-xs text-[#475569] flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <Scale className="h-4 w-4 text-[#1E40AF] shrink-0" />
+            <span>
+              <strong>Research Assistance Notice:</strong> Limitation mappings identify textual correspondence in indexed specifications. They do not constitute a formal legal conclusion of anticipation (35 U.S.C. § 102) or obviousness (35 U.S.C. § 103). Professional attorney evaluation is required.
+            </span>
           </div>
         </div>
 
@@ -208,7 +237,92 @@ export default function ClaimChartsPage() {
               Execute a claim investigation &rarr;
             </Link>
           </div>
+        ) : viewMode === "heatmap" ? (
+          /* HEATMAP COVERAGE VIEW */
+          <div className="p-5 overflow-x-auto">
+            <div className="mb-4 text-xs text-[#64748B]">
+              Limitation-by-publication coverage grid. Click any cell to inspect the supporting passage and verify text.
+            </div>
+            <table className="w-full text-left text-xs border border-[#E2E8F0]">
+              <thead>
+                <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0] text-[#475569] font-mono text-[10px] uppercase">
+                  <th className="p-3 border-r border-[#E2E8F0] min-w-[280px]">Claim Limitation Clause</th>
+                  {Array.from(new Set(filteredCharts.map((c) => c.publication_number || c.doc_id || c.patent_id || "Doc"))).slice(0, 6).map((docId) => (
+                    <th key={docId} className="p-3 border-r border-[#E2E8F0] text-center min-w-[130px]">
+                      <span className="font-bold text-[#0F172A] block">{docId}</span>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#E2E8F0]">
+                {Array.from(
+                  new Map(
+                    filteredCharts.map((c) => [
+                      c.element_id || c.claim_element_id || "el",
+                      {
+                        id: c.element_id || c.claim_element_id || "el",
+                        text: c.limitation_text || "Limitation text",
+                      },
+                    ])
+                  ).values()
+                ).map((elem) => {
+                  const docs = Array.from(new Set(filteredCharts.map((c) => c.publication_number || c.doc_id || c.patent_id || "Doc"))).slice(0, 6);
+                  return (
+                    <tr key={elem.id} className="hover:bg-[#F8FAFC]">
+                      <td className="p-3 border-r border-[#E2E8F0] bg-white">
+                        <span className="font-mono text-[11px] font-bold text-[#1E40AF] block">
+                          [{elem.id}]
+                        </span>
+                        <p className="text-[11px] text-[#0F172A] line-clamp-2 mt-0.5">
+                          {elem.text}
+                        </p>
+                      </td>
+                      {docs.map((docId) => {
+                        const match = filteredCharts.find(
+                          (c) =>
+                            (c.element_id === elem.id || c.claim_element_id === elem.id) &&
+                            (c.publication_number === docId || c.doc_id === docId || c.patent_id === docId)
+                        );
+                        if (!match) {
+                          return (
+                            <td key={docId} className="p-3 border-r border-[#E2E8F0] text-center bg-[#F8FAFC]">
+                              <span className="text-[10px] font-mono text-[#94A3B8]">—</span>
+                            </td>
+                          );
+                        }
+                        const isFull = match.support_level === "DIRECTLY_SUPPORTED" || match.support_level === "DIRECTLY_SUPPORTING";
+                        const isPartial = match.support_level === "PARTIALLY_SUPPORTED" || match.support_level === "PARTIALLY_SUPPORTING";
+                        return (
+                          <td
+                            key={docId}
+                            onClick={() => handleOpenReview(match)}
+                            className="p-3 border-r border-[#E2E8F0] text-center cursor-pointer hover:opacity-90 transition"
+                          >
+                            <span
+                              className={`inline-block font-mono text-[10px] font-semibold px-2 py-1 rounded-[4px] border ${
+                                isFull
+                                  ? "bg-[#ECFDF5] text-[#065F46] border-[#A7F3D0]"
+                                  : isPartial
+                                  ? "bg-[#FFFBEB] text-[#92400E] border-[#FDE68A]"
+                                  : "bg-[#F1F5F9] text-[#64748B] border-[#E2E8F0]"
+                              }`}
+                            >
+                              {match.paragraph_number || "[0001]"}
+                            </span>
+                            <span className="block text-[9px] text-[#64748B] font-mono mt-0.5">
+                              {match.verified ? "Verified" : "Unverified"}
+                            </span>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         ) : (
+          /* MATRIX TABLE VIEW */
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>

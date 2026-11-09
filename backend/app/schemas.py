@@ -198,6 +198,7 @@ class MatterCreate(BaseModel):
     technical_domain: str = "General"
     workspace_id: str | None = None
     notes: str | None = None
+    is_confidential: bool = False  # When True, Ethical Wall active: only assigned members have access
 
 
 class MatterUpdate(BaseModel):
@@ -209,6 +210,24 @@ class MatterUpdate(BaseModel):
     jurisdiction: str | None = None
     technical_domain: str | None = None
     notes: str | None = None
+    is_confidential: bool | None = None
+
+
+class MatterMemberAdd(BaseModel):
+    user_id: str
+    role: str = "ATTORNEY"  # OWNER, ATTORNEY, REVIEWER, VIEWER
+
+
+class MatterMemberOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    project_id: str
+    user_id: str
+    role: str
+    user_email: str | None = None
+    user_name: str | None = None
+    created_at: datetime | None = None
 
 
 class MatterOut(BaseModel):
@@ -223,6 +242,8 @@ class MatterOut(BaseModel):
     jurisdiction: str | None = None
     technical_domain: str | None = None
     workspace_id: str | None = None
+    is_confidential: bool = False
+    created_by_user_id: str | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
     searches_count: int = 0

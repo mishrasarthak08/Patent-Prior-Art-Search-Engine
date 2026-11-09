@@ -142,6 +142,11 @@ def record_evidence_in_ledger(
                     "engine_version": "3.0.0-integrity",
                     "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
                     "verification_strategy": "exact_character_substring_alignment",
+                    "exact_quote_verified": bool(coords.get("literal_match", False)),
+                    "semantic_relevance_assessed": True,
+                    "attorney_confirmation_required": True,
+                    "source_provenance_verified": True if doc else False,
+                    "legal_notice": "Automated technical correspondence. Does not constitute a statutory determination under 35 U.S.C. §§ 102/103. Professional practitioner review required.",
                 },
                 attorney_review_status="PENDING",
             )

@@ -1,0 +1,168 @@
+[
+  {
+    "query_id": "BAT-BENCH-01",
+    "domain": "Advanced Lithium-Ion Anodes",
+    "cpc_subclass": "H01M4/38",
+    "claim_text": "A high-capacity lithium-ion secondary battery comprising: a cathode comprising lithium nickel cobalt manganese oxide; an anode comprising a silicon-graphite composite with nano-silicon particles dispersed in carbon; and a non-aqueous liquid electrolyte comprising fluoroethylene carbonate additive.",
+    "gold_patent_ids": ["US10892482B2", "EP3890123A1"],
+    "negative_patent_ids": ["US10454101B2", "US10930920B2", "EP3787071A1"],
+    "expected_limitations": [
+      {
+        "element_id": "el-1",
+        "text": "cathode comprising lithium nickel cobalt manganese oxide",
+        "key_terms": ["cathode", "lithium nickel cobalt manganese oxide", "NMC"]
+      },
+      {
+        "element_id": "el-2",
+        "text": "anode comprising a silicon-graphite composite with nano-silicon particles dispersed in carbon",
+        "key_terms": ["anode", "silicon-graphite", "nano-silicon", "carbon"]
+      },
+      {
+        "element_id": "el-3",
+        "text": "non-aqueous liquid electrolyte comprising fluoroethylene carbonate additive",
+        "key_terms": ["electrolyte", "fluoroethylene carbonate", "FEC"]
+      }
+    ]
+  },
+  {
+    "query_id": "BAT-BENCH-02",
+    "domain": "Sulfide Solid-State Electrolytes",
+    "cpc_subclass": "H01M10/0562",
+    "claim_text": "A solid-state composite electrolyte membrane for an all-solid-state lithium battery comprising: an inorganic sulfide-based solid electrolyte represented by Li6PS5Cl argyrodite; and a fluorinated copolymer binder comprising vinylidene fluoride and hexafluoropropylene units.",
+    "gold_patent_ids": ["US10454101B2", "WO2022049102A1"],
+    "negative_patent_ids": ["US10892482B2", "EP3787071A1", "US11394019B2"],
+    "expected_limitations": [
+      {
+        "element_id": "el-1",
+        "text": "inorganic sulfide-based solid electrolyte represented by Li6PS5Cl argyrodite",
+        "key_terms": ["sulfide", "solid electrolyte", "Li6PS5Cl", "argyrodite"]
+      },
+      {
+        "element_id": "el-2",
+        "text": "fluorinated copolymer binder comprising vinylidene fluoride and hexafluoropropylene units",
+        "key_terms": ["fluorinated copolymer", "binder", "vinylidene fluoride", "PVDF-HFP"]
+      }
+    ]
+  },
+  {
+    "query_id": "BAT-BENCH-03",
+    "domain": "Single-Crystal High-Nickel Cathodes",
+    "cpc_subclass": "H01M4/525",
+    "claim_text": "A lithium secondary battery comprising: a positive electrode comprising single-crystal particles of lithium transition metal oxide represented by Li1+a(NixMnyCoz)O2 wherein x is at least 0.80; and a surface coating layer comprising zirconium oxide and boron oxide disposed on the single-crystal particles.",
+    "gold_patent_ids": ["US10930920B2"],
+    "negative_patent_ids": ["US11394019B2", "US10892482B2", "US11569480B2"],
+    "expected_limitations": [
+      {
+        "element_id": "el-1",
+        "text": "positive electrode comprising single-crystal particles of lithium transition metal oxide represented by Li1+a(NixMnyCoz)O2 wherein x is at least 0.80",
+        "key_terms": ["single-crystal", "high nickel", "Li1+a(NixMnyCoz)O2", "x >= 0.80"]
+      },
+      {
+        "element_id": "el-2",
+        "text": "surface coating layer comprising zirconium oxide and boron oxide disposed on the single-crystal particles",
+        "key_terms": ["coating layer", "zirconium oxide", "boron oxide", "ZrO2", "B2O3"]
+      }
+    ]
+  },
+  {
+    "query_id": "BAT-BENCH-04",
+    "domain": "Dry Electrode Manufacturing",
+    "cpc_subclass": "H01M4/04",
+    "claim_text": "A solvent-free dry electrode film for an electrochemical cell comprising: an active material in an amount between 85% and 98% by weight; and a fibrillized polytetrafluoroethylene (PTFE) binder matrix forming a three-dimensional network of interconnected polymeric microfibrils encapsulating the active material.",
+    "gold_patent_ids": ["US11121404B2"],
+    "negative_patent_ids": ["US10892482B2", "EP3890123A1", "EP3951940A1"],
+    "expected_limitations": [
+      {
+        "element_id": "el-1",
+        "text": "solvent-free dry electrode film comprising an active material in an amount between 85% and 98% by weight",
+        "key_terms": ["solvent-free", "dry electrode film", "active material"]
+      },
+      {
+        "element_id": "el-2",
+        "text": "fibrillized polytetrafluoroethylene (PTFE) binder matrix forming a three-dimensional network of interconnected polymeric microfibrils",
+        "key_terms": ["fibrillized", "polytetrafluoroethylene", "PTFE", "microfibrils web"]
+      }
+    ]
+  },
+  {
+    "query_id": "BAT-BENCH-05",
+    "domain": "Garnet Ceramic Solid Electrolytes",
+    "cpc_subclass": "H01M10/0562",
+    "claim_text": "A solid electrolyte membrane for an all-solid-state lithium battery comprising: a polycrystalline ceramic body having a garnet crystal structure of formula Li7-xLa3Zr2-xTaxO12; and an amorphous lithium borosilicate grain boundary passivating phase present at grain boundaries of the polycrystalline ceramic body.",
+    "gold_patent_ids": ["EP3787071A1"],
+    "negative_patent_ids": ["US10454101B2", "WO2022049102A1", "US10892482B2"],
+    "expected_limitations": [
+      {
+        "element_id": "el-1",
+        "text": "polycrystalline ceramic body having a garnet crystal structure of formula Li7-xLa3Zr2-xTaxO12",
+        "key_terms": ["garnet crystal structure", "LLZTO", "Li7-xLa3Zr2-xTaxO12"]
+      },
+      {
+        "element_id": "el-2",
+        "text": "amorphous lithium borosilicate grain boundary passivating phase present at grain boundaries",
+        "key_terms": ["lithium borosilicate", "grain boundary phase", "passivating phase"]
+      }
+    ]
+  },
+  {
+    "query_id": "BAT-BENCH-06",
+    "domain": "Lithium Metal Anode Protection",
+    "cpc_subclass": "H01M4/134",
+    "claim_text": "A protected negative electrode for a lithium secondary battery comprising: a lithium metal layer; and an artificial solid-electrolyte interphase (SEI) layer formed on the lithium metal layer comprising a cross-linked network of fluorinated siloxane oligomers having fluoroalkyl side chains.",
+    "gold_patent_ids": ["WO2023180210A1"],
+    "negative_patent_ids": ["US10892482B2", "US11489162B2", "US10930920B2"],
+    "expected_limitations": [
+      {
+        "element_id": "el-1",
+        "text": "lithium metal layer",
+        "key_terms": ["lithium metal layer", "metallic lithium"]
+      },
+      {
+        "element_id": "el-2",
+        "text": "artificial solid-electrolyte interphase (SEI) layer comprising a cross-linked network of fluorinated siloxane oligomers having fluoroalkyl side chains",
+        "key_terms": ["artificial SEI", "fluorinated siloxane", "fluoroalkyl side chains", "perfluorooctyltriethoxysilane"]
+      }
+    ]
+  },
+  {
+    "query_id": "BAT-BENCH-07",
+    "domain": "Cobalt-Free Olivine Cathodes",
+    "cpc_subclass": "H01M4/58",
+    "claim_text": "A positive electrode active material for a secondary battery comprising: olivine particles represented by the formula Li1+aMnxFe1-xPO4 wherein 0.55 <= x <= 0.80; an inner amorphous carbon coating layer covering the olivine particles; and an outer conductive matrix comprising graphene sheets interconnecting the olivine particles.",
+    "gold_patent_ids": ["US11394019B2"],
+    "negative_patent_ids": ["US10930920B2", "EP3951940A1", "US11569480B2"],
+    "expected_limitations": [
+      {
+        "element_id": "el-1",
+        "text": "olivine particles represented by the formula Li1+aMnxFe1-xPO4 wherein 0.55 <= x <= 0.80",
+        "key_terms": ["olivine", "LiMnxFe1-xPO4", "LMFP", "0.55 <= x <= 0.80"]
+      },
+      {
+        "element_id": "el-2",
+        "text": "inner amorphous carbon coating layer covering the olivine particles and outer conductive matrix comprising graphene sheets",
+        "key_terms": ["amorphous carbon coating", "graphene sheets", "conductive matrix"]
+      }
+    ]
+  },
+  {
+    "query_id": "BAT-BENCH-08",
+    "domain": "Internal Void Porous Silicon Anodes",
+    "cpc_subclass": "H01M4/38",
+    "claim_text": "An anode active material for a lithium secondary battery comprising: composite particles comprising a porous silicon core and a carbon coating layer disposed on the porous silicon core, wherein the porous silicon core has an internal pore volume of 0.35 cm3/g to 0.80 cm3/g to buffer silicon volume expansion during lithiation.",
+    "gold_patent_ids": ["US11489162B2", "EP3890123A1"],
+    "negative_patent_ids": ["US10930920B2", "WO2023180210A1", "US11569480B2"],
+    "expected_limitations": [
+      {
+        "element_id": "el-1",
+        "text": "composite particles comprising a porous silicon core and a carbon coating layer",
+        "key_terms": ["porous silicon core", "carbon coating", "composite particles"]
+      },
+      {
+        "element_id": "el-2",
+        "text": "porous silicon core has an internal pore volume of 0.35 cm3/g to 0.80 cm3/g to buffer volumetric expansion",
+        "key_terms": ["internal pore volume", "0.35 to 0.80 cm3/g", "buffer volume expansion"]
+      }
+    ]
+  }
+]
+

@@ -9,7 +9,6 @@ services:
     volumes:
       - ./qdrant_data:/qdrant/storage
 
-
   backend:
     build: 
       context: .
@@ -20,6 +19,7 @@ services:
       - QDRANT_HOST=${QDRANT_HOST:-qdrant}
       - QDRANT_PORT=${QDRANT_PORT:-6333}
       - QDRANT_API_KEY=${QDRANT_API_KEY:-}
+      - API_KEY=${API_KEY:-dev_key}
     env_file:
       - .env
     depends_on:
@@ -27,11 +27,15 @@ services:
     volumes:
       - ./backend:/app/backend
       - ./eval:/app/eval
+      - ./data:/app/data
 
   frontend:
     build:
       context: ./frontend
     ports:
       - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+      - NEXT_PUBLIC_APP_API_KEY=${API_KEY:-dev_key}
     depends_on:
       - backend

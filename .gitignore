@@ -5,11 +5,16 @@
 !tests/eval/citation_pairs.json
 !tests/eval/gold_set.json
 !tests/eval/results/*.json
+!eval/**/*.json
+!eval/*.json
 !package.json
 !package-lock.json
 !tsconfig.json
 
 # Databases & Caches
+*.db
+data/backups/
+data/email_spool/
 .langchain.db
 data/corpus/*.pkl
 .ruff_cache/

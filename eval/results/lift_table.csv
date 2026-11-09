@@ -1,0 +1,6 @@
+System,P@5,R@5,MRR,nDCG@5
+bm25_only,0.32,1.00,1.00,1.00
+dense_only,0.00,0.00,0.00,0.00
+hybrid_rrf,0.32,1.00,1.00,1.00
+hybrid_rerank,0.32,1.00,1.00,1.00
+full_pipeline,0.32,1.00,1.00,1.00

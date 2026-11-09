@@ -1,415 +1,333 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import ReactMarkdown from 'react-markdown';
+import React from "react";
+import Link from "next/link";
+import { 
+  ArrowRight, 
+  CheckCircle2, 
+  ShieldCheck, 
+  Search, 
+  FileText, 
+  Layers, 
+  Scale, 
+  Sliders,
+  Check, 
+  ChevronRight,
+  Sparkles,
+  ExternalLink,
+  Cpu,
+  Lock,
+  Database,
+  Building,
+  UserCheck,
+  Compass,
+  FileCheck,
+  Briefcase
+} from "lucide-react";
+import { MarketingHeader } from "@/components/MarketingHeader";
+import { MarketingFooter } from "@/components/MarketingFooter";
+import { AnatomyOfInventionHero } from "@/components/landing/AnatomyOfInventionHero";
+import { VocabularyDriftVisual } from "@/components/landing/VocabularyDriftVisual";
+import { UnfoldingIntelligenceSequence } from "@/components/landing/UnfoldingIntelligenceSequence";
+import { InteractiveWorkbenchDemo } from "@/components/landing/InteractiveWorkbenchDemo";
+import { DiscoveryLandscapeGraph } from "@/components/landing/DiscoveryLandscapeGraph";
+import { ForensicTrustSchematic } from "@/components/landing/ForensicTrustSchematic";
 
-const DISCLAIMER_TEXT = `This tool assists prior-art research and is NOT a substitute for a registered patent attorney, patent agent, or professional prior-art search firm. Results are retrieval-and-ranking outputs from an automated pipeline and have not been reviewed by a legal professional.`;
-
-const HowItWorks = () => (
-  <div className="grid md:grid-cols-4 gap-4 mt-12 mb-8">
-    {[
-      { step: "1", title: "Claim Decomposition", desc: "Gemini AI breaks complex claims into discrete structural elements and generates HyDE passages." },
-      { step: "2", title: "Hybrid Retrieval", desc: "BM25 keyword search is fused with Cohere dense vector search via Qdrant to maximize recall." },
-      { step: "3", title: "Cross-Encoder Reranking", desc: "Cohere Rerank v3 dynamically rescores the top candidates for precision." },
-      { step: "4", title: "Explainable AI", desc: "Each prior-art candidate is analyzed by AI to explain exactly why it is relevant." }
-    ].map(s => (
-      <div key={s.step} className="bg-zinc-900/40 border border-zinc-800/80 p-5 rounded-xl hover:bg-zinc-900/80 transition-colors backdrop-blur-sm">
-        <div className="bg-indigo-500/20 text-indigo-400 w-8 h-8 rounded-full flex items-center justify-center font-bold mb-3 border border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.2)]">{s.step}</div>
-        <h3 className="font-semibold text-zinc-200 mb-2">{s.title}</h3>
-        <p className="text-zinc-400 text-sm">{s.desc}</p>
-      </div>
-    ))}
-  </div>
-);
-
-const EvalMetrics = ({ metrics }: { metrics: any[] }) => {
-  if (!metrics || metrics.length === 0) return null;
+export default function PatentLandingPage() {
   return (
-    <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-xl overflow-hidden mt-8 mb-12 backdrop-blur-sm shadow-xl">
-      <div className="px-6 py-4 border-b border-zinc-800/80 bg-zinc-900/80 flex items-center gap-2">
-        <svg className="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-        </svg>
-        <h3 className="font-semibold text-zinc-100">System Evaluation Metrics (Latest Run)</h3>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-zinc-950/60 text-zinc-400 uppercase text-xs tracking-wider">
-            <tr>
-              <th className="px-6 py-3 font-semibold">System Pipeline</th>
-              <th className="px-6 py-3 font-semibold">Precision@5</th>
-              <th className="px-6 py-3 font-semibold">Recall@5</th>
-              <th className="px-6 py-3 font-semibold">MRR</th>
-              <th className="px-6 py-3 font-semibold">nDCG@5</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-800/50">
-            {metrics.map((row) => (
-              <tr key={row.System} className="hover:bg-zinc-800/20 transition-colors">
-                <td className="px-6 py-4 font-medium text-zinc-200 capitalize flex items-center gap-2">
-                  {row.System === 'full' && <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>}
-                  {row.System}
-                </td>
-                <td className="px-6 py-4 text-zinc-300 font-mono">{row["P@5"]}</td>
-                <td className="px-6 py-4 text-zinc-300 font-mono">{row["R@5"]}</td>
-                <td className="px-6 py-4 text-zinc-300 font-mono">{row.MRR}</td>
-                <td className="px-6 py-4 text-emerald-400 font-mono font-semibold">{row["nDCG@5"]}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-};
+    <div className="min-h-screen bg-[#F8F9FA] text-[#0F172A] flex flex-col font-sans selection:bg-[#1E40AF]/15">
+      <MarketingHeader />
 
-export default function Home() {
-  const [claimText, setClaimText] = useState("");
-  const [results, setResults] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [evalMetrics, setEvalMetrics] = useState<any[]>([]);
+      <main className="flex-1">
+        {/* HERO: THE ANATOMY OF AN INVENTION */}
+        <AnatomyOfInventionHero />
 
-  useEffect(() => {
-    const fetchMetrics = async () => {
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        const apiKey = process.env.NEXT_PUBLIC_APP_API_KEY || "dev_key";
-        const res = await fetch(`${apiUrl}/eval/latest`, { headers: { "X-API-Key": apiKey } });
-        if (res.ok) {
-          const data = await res.json();
-          setEvalMetrics(data.metrics || []);
-        }
-      } catch (err) {
-        console.error("Failed to fetch eval metrics:", err);
-      }
-    };
-    fetchMetrics();
-  }, []);
+        {/* SECTION A: THE PROBLEM OF DISCOVERY */}
+        <section className="py-20 md:py-28 border-b border-[#E2E8F0] bg-[#F8F9FA]">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12">
+            <div className="max-w-3xl space-y-3">
+              <span className="font-mono text-xs font-bold text-[#1E40AF] uppercase tracking-wider">
+                SECTION A &bull; THE PROBLEM OF DISCOVERY
+              </span>
+              <h2 className="text-3xl sm:text-5xl text-[#0F172A] font-serif font-normal leading-tight">
+                Why standard keyword search misses critical prior art.
+              </h2>
+              <p className="text-base text-[#475569] leading-relaxed">
+                Patent disclosures employ idiosyncratic legalistic phrasing, complex dependent limitation scopes, chemical formulas, and hundred-page specifications. A single technical disclosure can be written under four completely different vocabularies.
+              </p>
+            </div>
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    setResults(null);
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const apiKey = process.env.NEXT_PUBLIC_APP_API_KEY || "dev_key";
-      
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120000);
+            {/* Interactive Multi-Vocabulary Component */}
+            <VocabularyDriftVisual />
+          </div>
+        </section>
 
-      const res = await fetch(`${apiUrl}/search`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-API-Key": apiKey },
-        body: JSON.stringify({ raw_claim: claimText }),
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
+        {/* SECTION B: THE INTELLIGENCE PROCESS */}
+        <section className="py-20 md:py-28 border-b border-[#E2E8F0] bg-white">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12">
+            <div className="max-w-3xl space-y-3">
+              <span className="font-mono text-xs font-bold text-[#1E40AF] uppercase tracking-wider">
+                SECTION B &bull; THE INTELLIGENCE PROCESS
+              </span>
+              <h2 className="text-3xl sm:text-5xl text-[#0F172A] font-serif font-normal leading-tight">
+                An inspectable, multi-stage research flow.
+              </h2>
+              <p className="text-base text-[#475569] leading-relaxed">
+                Rather than treating independent claims as monolithic strings or relying on unpredictable generative AI prompts, every query executes through a disciplined, six-stage pipeline engineered to withstand examination and litigation scrutiny.
+              </p>
+            </div>
 
-      if (!res.ok) {
-        throw new Error(`Search failed with status: ${res.status}`);
-      }
-      const data = await res.json();
-      setResults(data);
-    } catch (err: any) {
-      if (err.name === 'AbortError') {
-        setError("Search request timed out (120s). Try a shorter claim or check backend.");
-      } else {
-        console.error(err);
-        setError(err.message || "Search failed. Ensure backend and Qdrant are running.");
-      }
-    }
-    setLoading(false);
-  };
+            {/* Unfolding Intelligence Pipeline */}
+            <UnfoldingIntelligenceSequence />
+          </div>
+        </section>
 
-  return (
-    <main className="min-h-screen bg-[#09090b] text-zinc-100 font-sans selection:bg-indigo-500/30">
-      {/* Background gradients */}
-      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-indigo-900/20 blur-[120px]" />
-        <div className="absolute top-[60%] -right-[10%] w-[50%] h-[50%] rounded-full bg-blue-900/20 blur-[120px]" />
-      </div>
+        {/* SECTION C: INTERACTIVE CLAIM-TO-EVIDENCE DEMONSTRATION */}
+        <section className="py-20 md:py-28 border-b border-[#E2E8F0] bg-[#F8F9FA]">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12">
+            <div className="max-w-3xl space-y-3">
+              <span className="font-mono text-xs font-bold text-[#1E40AF] uppercase tracking-wider">
+                SECTION C &bull; INTERACTIVE CLAIM-TO-EVIDENCE BENCHMARK
+              </span>
+              <h2 className="text-3xl sm:text-5xl text-[#0F172A] font-serif font-normal leading-tight">
+                Test the workbench on real patent claims.
+              </h2>
+              <p className="text-base text-[#475569] leading-relaxed">
+                Select a high-tech sector below to observe atomic limitation extraction, dual-channel retrieval across real publications, verbatim quotation verification, and attorney review decisions.
+              </p>
+            </div>
 
-      <div className="relative z-10 max-w-5xl mx-auto px-6 py-16 space-y-12">
-        <header className="space-y-4 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="inline-block"
-          >
-            <span className="px-3 py-1 text-xs font-semibold tracking-wider text-indigo-400 uppercase bg-indigo-400/10 rounded-full border border-indigo-400/20">
-              AI-Powered Search
-            </span>
-          </motion.div>
-          <motion.h1
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-4xl md:text-5xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-zinc-100 to-zinc-500"
-          >
-            Patent Prior-Art Engine
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-zinc-400 max-w-2xl mx-auto"
-          >
-            A Hybrid-Retrieval, Reranked, and Explainable Prior-Art Discovery System
-          </motion.p>
-        </header>
+            {/* Genuine Interactive Demonstration Workbench */}
+            <InteractiveWorkbenchDemo />
+          </div>
+        </section>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-        >
-          <HowItWorks />
-          <EvalMetrics metrics={evalMetrics} />
-        </motion.div>
+        {/* SECTION D: THE DISCOVERY LANDSCAPE */}
+        <section className="py-20 md:py-28 border-b border-[#E2E8F0] bg-white">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12">
+            <div className="max-w-3xl space-y-3">
+              <span className="font-mono text-xs font-bold text-[#1E40AF] uppercase tracking-wider">
+                SECTION D &bull; THE DISCOVERY LANDSCAPE
+              </span>
+              <h2 className="text-3xl sm:text-5xl text-[#0F172A] font-serif font-normal leading-tight">
+                Uncover multi-dimensional patent relationships.
+              </h2>
+              <p className="text-base text-[#475569] leading-relaxed">
+                Prior art does not exist in isolation. Our relational engine maps target claims directly to citations, cross-border patent families across US, EP, and WIPO, and official CPC classifications.
+              </p>
+            </div>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-        >
-          {/* Mandatory Disclaimer */}
-          <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl text-sm text-red-400 flex items-start gap-3 backdrop-blur-sm">
-            <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <div>
-              <span className="font-bold block mb-1 text-red-300">LEGAL DISCLAIMER</span>
-              <p className="leading-relaxed opacity-90">{DISCLAIMER_TEXT}</p>
+            {/* Knowledge Topology Network Graph */}
+            <DiscoveryLandscapeGraph />
+          </div>
+        </section>
+
+        {/* SECTION E: PRODUCT CAPABILITIES */}
+        <section className="py-20 md:py-28 border-b border-[#E2E8F0] bg-[#F8F9FA]">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-14">
+            <div className="max-w-3xl space-y-3">
+              <span className="font-mono text-xs font-bold text-[#1E40AF] uppercase tracking-wider">
+                SECTION E &bull; PROFESSIONAL PRODUCT CAPABILITIES
+              </span>
+              <h2 className="text-3xl sm:text-5xl text-[#0F172A] font-serif font-normal leading-tight">
+                Engineered for serious intellectual property work.
+              </h2>
+              <p className="text-base text-[#475569] leading-relaxed">
+                Every screen in the authenticated platform is built as a precision research instrument for registered patent attorneys, examiners, and corporate IP counsel.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[
+                {
+                  title: "Comparative Claim Matrix",
+                  category: "CLAIM ANALYSIS",
+                  desc: "Map every independent and dependent claim element side-by-side across multiple cited references with support-level scoring.",
+                  href: "/app/claim-map",
+                  badge: "/app/claim-map"
+                },
+                {
+                  title: "Patent Citation Graph",
+                  category: "GRAPH EXPLORER",
+                  desc: "Traverse forward and backward citation networks and global patent family equivalents across US, EP, and WO jurisdictions.",
+                  href: "/app/graph",
+                  badge: "/app/graph"
+                },
+                {
+                  title: "Forensic Evidence Ledger",
+                  category: "VERIFIABLE AUDIT",
+                  desc: "Inspect certified quotations with exact character offsets, bracketed paragraphs, and cryptographic SHA-256 document hashing.",
+                  href: "/app/claim-charts",
+                  badge: "/app/claim-charts"
+                },
+                {
+                  title: "Research Dossier Studio",
+                  category: "LEGAL EXPORTS",
+                  desc: "Generate comprehensive prior-art dossiers with statutory disclaimer notices, print-to-PDF formatting, and Markdown exports.",
+                  href: "/app/dossier",
+                  badge: "/app/dossier"
+                }
+              ].map((cap, idx) => (
+                <div key={idx} className="p-6 rounded-[6px] border border-[#CBD5E1] bg-white space-y-4 hover:border-[#1E40AF] transition shadow-xs flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-[10px] font-bold text-[#1E40AF] uppercase">
+                        {cap.category}
+                      </span>
+                      <span className="font-mono text-[10px] text-[#94A3B8]">{cap.badge}</span>
+                    </div>
+                    <h3 className="text-base font-semibold text-[#0F172A] leading-snug">
+                      {cap.title}
+                    </h3>
+                    <p className="text-xs text-[#475569] leading-relaxed">
+                      {cap.desc}
+                    </p>
+                  </div>
+                  <div className="pt-2 border-t border-[#E2E8F0]">
+                    <Link
+                      href={cap.href}
+                      className="text-xs font-semibold text-[#1E40AF] hover:underline inline-flex items-center gap-1 font-mono"
+                    >
+                      Open Capability &rarr;
+                    </Link>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        </motion.div>
+        </section>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="bg-zinc-900/50 backdrop-blur-xl border border-zinc-800 p-1 rounded-2xl shadow-2xl"
-        >
-          <div className="bg-zinc-900 rounded-xl p-6">
-            <form onSubmit={handleSearch} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">Raw Patent Claim</label>
-                <div className="relative group">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
-                  <textarea
-                    className="relative w-full rounded-xl bg-zinc-950 border border-zinc-800 p-4 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-mono text-sm resize-y"
-                    rows={4}
-                    value={claimText}
-                    onChange={(e) => setClaimText(e.target.value)}
-                    placeholder="e.g., A device comprising a processor, a memory, and..."
-                    required
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end pt-2">
-                <button
-                  type="submit"
-                  disabled={loading || !claimText.trim()}
-                  className="relative group overflow-hidden rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <span className="relative z-10 flex items-center gap-2">
-                    {loading ? (
-                      <>
-                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                        </svg>
-                        Analyzing Claim...
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        Search Prior Art
-                      </>
-                    )}
-                  </span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </motion.div>
+        {/* SECTION F: WHO BENEFITS */}
+        <section className="py-20 md:py-28 border-b border-[#E2E8F0] bg-white">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12">
+            <div className="max-w-3xl space-y-3">
+              <span className="font-mono text-xs font-bold text-[#1E40AF] uppercase tracking-wider">
+                SECTION F &bull; WHO BENEFITS
+              </span>
+              <h2 className="text-3xl sm:text-5xl text-[#0F172A] font-serif font-normal leading-tight">
+                Designed for the highest standards of patent practice.
+              </h2>
+              <p className="text-base text-[#475569] leading-relaxed">
+                Whether formulating Section 102 novelty rejections, preparing freedom-to-operate clearances, or vetting inventions prior to filing:
+              </p>
+            </div>
 
-        <AnimatePresence>
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-sm"
-            >
-              {error}
-            </motion.div>
-          )}
-
-          {results && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-12 pb-12"
-            >
-              <section className="space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="h-px bg-zinc-800 flex-1"></div>
-                  <h2 className="text-xl font-semibold tracking-tight text-zinc-100 flex items-center gap-2">
-                    <svg className="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                    </svg>
-                    Decomposed Claim Elements
-                  </h2>
-                  <div className="h-px bg-zinc-800 flex-1"></div>
-                </div>
-                
-                <div className="grid gap-3 md:grid-cols-2">
-                  {results.query_claim.elements.map((elem: any) => (
-                    <motion.div 
-                      whileHover={{ scale: 1.01 }}
-                      key={elem.element_id} 
-                      className="bg-zinc-900/40 border border-zinc-800/80 p-4 rounded-xl flex gap-4 items-start hover:bg-zinc-900/80 transition-colors"
-                    >
-                      <div className="flex flex-col items-center gap-2">
-                        <span className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-xs px-2 py-1 rounded font-mono font-bold">
-                          {elem.element_id}
-                        </span>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                {
+                  role: "Patent Prosecution Attorneys",
+                  focus: "Pre-Filing & Office Action Defense",
+                  desc: "Deconstruct provisional drafts and client disclosures to anticipate 35 U.S.C. § 102/103 rejections before filing, preserving patent term and drafting bulletproof claim scopes.",
+                  icon: Scale
+                },
+                {
+                  role: "Corporate IP & R&D Counsel",
+                  focus: "Freedom to Operate & M&A Diligence",
+                  desc: "Conduct systematic multi-jurisdiction invalidity studies, identify whitespace across competitor patent portfolios, and organize matters into confidential workspace repositories.",
+                  icon: Building
+                },
+                {
+                  role: "Patent Examiners & Searchers",
+                  focus: "Prior-Art Clearance & Citation",
+                  desc: "Eliminate hallucinated patent numbers and false positive matches with field-weighted BM25, dense vector search, and automated paragraph-level quotation verification.",
+                  icon: UserCheck
+                }
+              ].map((persona, idx) => {
+                const Icon = persona.icon;
+                return (
+                  <div key={idx} className="p-6 rounded-[6px] border border-[#CBD5E1] bg-[#FAFCFF] space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-[5px] bg-[#1E40AF] text-white flex items-center justify-center">
+                        <Icon className="h-4 w-4" />
                       </div>
                       <div>
-                        <span className="inline-block mb-1 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-                          {elem.element_type}
-                        </span>
-                        <p className="text-zinc-300 text-sm leading-relaxed">{elem.text}</p>
+                        <h3 className="font-semibold text-sm text-[#0F172A]">{persona.role}</h3>
+                        <p className="font-mono text-[10px] text-[#64748B]">{persona.focus}</p>
                       </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </section>
+                    </div>
+                    <p className="text-xs text-[#475569] leading-relaxed">
+                      {persona.desc}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
 
-              <section className="space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="h-px bg-zinc-800 flex-1"></div>
-                  <h2 className="text-xl font-semibold tracking-tight text-zinc-100 flex items-center gap-2">
-                    <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Ranked Results ({results.results.length})
-                  </h2>
-                  <div className="h-px bg-zinc-800 flex-1"></div>
-                </div>
+        {/* SECTION G: TRUST & EVIDENCE INTEGRITY */}
+        <section className="py-20 md:py-28 border-b border-[#E2E8F0] bg-[#F8F9FA]">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12">
+            <div className="max-w-3xl space-y-3">
+              <span className="font-mono text-xs font-bold text-[#1E40AF] uppercase tracking-wider">
+                SECTION G &bull; EVIDENCE INTEGRITY & TRUST
+              </span>
+              <h2 className="text-3xl sm:text-5xl text-[#0F172A] font-serif font-normal leading-tight">
+                Forensic evidence integrity, zero retention.
+              </h2>
+              <p className="text-base text-[#475569] leading-relaxed">
+                In patent law, hallucinated citations or approximate quotes are fatal. Our platform guarantees verbatim substring proof, exact character coordinates, cryptographic document hashes, and true in-memory Zero Data Retention.
+              </p>
+            </div>
 
-                <div className="space-y-6">
-                  {results.results.map((doc: any, i: number) => (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.1 }}
-                      key={doc.doc_id} 
-                      className="group relative bg-zinc-900/50 backdrop-blur-sm border border-zinc-800 rounded-2xl p-6 transition-all hover:bg-zinc-900 hover:border-zinc-700"
-                    >
-                      <div className="absolute top-0 right-0 -mt-3 -mr-3 bg-zinc-800 border border-zinc-700 w-8 h-8 rounded-full flex items-center justify-center shadow-lg font-bold text-sm text-zinc-300 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                        #{i + 1}
-                      </div>
+            {/* Forensic Trust Architecture Schematic */}
+            <ForensicTrustSchematic />
+          </div>
+        </section>
 
-                      <div className="space-y-5">
-                        <div>
-                          <div className="flex flex-wrap gap-2 items-center mb-2">
-                            <h3 className="text-xl font-bold text-zinc-100">{doc.doc_id}</h3>
-                            <div className="flex gap-2 ml-auto">
-                              {doc.retrieval_sources.map((src: string) => (
-                                <span key={src} className="bg-zinc-800 text-zinc-300 border border-zinc-700 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">
-                                  {src}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                          <p className="text-sm text-zinc-400 font-medium">{doc.title}</p>
-                        </div>
+        {/* SECTION H: CLOSING EXPERIENCE */}
+        <section className="py-24 md:py-32 bg-white relative overflow-hidden">
+          <div className="absolute inset-0 drafting-grid opacity-40 pointer-events-none" />
+          
+          <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center space-y-6">
+            <div className="inline-flex items-center gap-2 rounded-[4px] border border-[#CBD5E1] bg-[#F8FAFC] px-3 py-1 font-mono text-[11px] font-semibold text-[#1E40AF]">
+              <span>SYSTEM RELEASE 3.2</span>
+              <span className="text-[#CBD5E1]">&bull;</span>
+              <span>PATENT RESEARCH INTELLIGENCE</span>
+            </div>
 
-                        <div className="relative">
-                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-500 to-blue-500 rounded-full"></div>
-                          <p className="text-zinc-300 text-sm leading-relaxed pl-4 italic">
-                            "{doc.snippet}"
-                          </p>
-                        </div>
-                        
-                        <div className="bg-indigo-500/5 border border-indigo-500/10 p-4 rounded-xl text-sm text-indigo-100/80">
-                          <span className="font-bold text-indigo-400 block mb-2">AI Relevance Analysis</span> 
-                          <ReactMarkdown
-                            components={{
-                              p: ({node, ...props}) => <p className="mb-2 last:mb-0 leading-relaxed" {...props} />,
-                              strong: ({node, ...props}) => <strong className="font-bold text-indigo-300" {...props} />,
-                              ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-2 space-y-1" {...props} />,
-                              ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-2 space-y-1" {...props} />,
-                              li: ({node, ...props}) => <li className="pl-1" {...props} />
-                            }}
-                          >
-                            {doc.explanation}
-                          </ReactMarkdown>
-                        </div>
+            <h2 className="text-4xl sm:text-6xl text-[#0F172A] font-serif font-normal leading-tight">
+              Execute your next prior-art investigation with complete certainty.
+            </h2>
 
-                        <div className="flex flex-wrap gap-2 items-center bg-zinc-950 p-3 rounded-lg border border-zinc-800/50">
-                          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Matched:</span>
-                          {doc.matched_elements.length > 0 ? (
-                            doc.matched_elements.map((elem_id: string) => (
-                              <span key={elem_id} className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs px-2 py-1 rounded shadow-sm font-mono font-bold">
-                                {elem_id}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="text-zinc-600 text-xs italic">None</span>
-                          )}
-                        </div>
+            <p className="text-base sm:text-lg text-[#475569] max-w-2xl mx-auto leading-relaxed">
+              Experience atomic claim limitation parsing, iterative multi-strategy retrieval, and certified evidence claim charts across real patent publications.
+            </p>
 
-                        <details className="group/details">
-                          <summary className="cursor-pointer text-xs font-semibold tracking-wider uppercase text-zinc-500 hover:text-indigo-400 transition-colors flex items-center gap-1 outline-none select-none">
-                            <svg className="w-4 h-4 transition-transform group-open/details:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                            Scoring Debugger
-                          </summary>
-                          <div className="mt-3 grid grid-cols-2 gap-4 p-4 bg-zinc-950 rounded-xl border border-zinc-800 text-sm">
-                            <div>
-                              <strong className="text-zinc-400 block mb-2 text-xs uppercase tracking-wider">Raw Component Scores</strong>
-                              <div className="space-y-1">
-                                {Object.entries(doc.raw_scores).map(([k, v]: [string, any]) => (
-                                  <div key={k} className="flex justify-between font-mono text-xs">
-                                    <span className="text-zinc-500">{k}:</span>
-                                    <span className="text-indigo-300">{v.toFixed(4)}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                            <div className="flex flex-col justify-center space-y-2 border-l border-zinc-800 pl-4">
-                              <div className="flex justify-between font-mono text-xs">
-                                <span className="text-zinc-400 uppercase tracking-wider font-bold">Fused</span>
-                                <span className="text-emerald-400 font-bold">{doc.fused_score?.toFixed(4) || "0.0000"}</span>
-                              </div>
-                              <div className="flex justify-between font-mono text-xs">
-                                <span className="text-zinc-400 uppercase tracking-wider font-bold">Rerank</span>
-                                <span className={doc.rerank_score ? "text-emerald-400 font-bold" : "text-zinc-600 italic"}>
-                                  {doc.rerank_score ? doc.rerank_score.toFixed(4) : "N/A"}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </details>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </section>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </main>
+            <div className="pt-4 flex flex-wrap justify-center gap-3.5">
+              <Link
+                href="/app"
+                className="inline-flex items-center gap-2 rounded-[5px] bg-[#0F172A] px-7 py-3 text-xs font-semibold text-white hover:bg-[#1E40AF] transition shadow-xs"
+              >
+                Launch Search Engine <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+              <Link
+                href="/pricing"
+                className="inline-flex items-center gap-2 rounded-[5px] border border-[#CBD5E1] bg-white px-6 py-3 text-xs font-semibold text-[#0F172A] hover:bg-[#F8FAFC] transition shadow-xs"
+              >
+                View Plans & Seats
+              </Link>
+            </div>
+
+            <div className="pt-8 flex flex-wrap items-center justify-center gap-8 font-mono text-xs text-[#64748B]">
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-[#059669]" />
+                <span>Zero Data Retention Mode</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-[#059669]" />
+                <span>Verbatim Substring Proof</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-[#059669]" />
+                <span>US, EP & WIPO Multi-Corpus</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <MarketingFooter />
+    </div>
   );
 }

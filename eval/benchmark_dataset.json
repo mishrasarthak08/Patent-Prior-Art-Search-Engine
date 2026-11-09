@@ -1,0 +1,132 @@
+[
+  {
+    "query_id": "BENCH-BAT-001",
+    "domain": "Electrochemical Energy Storage",
+    "cpc_subclass": "H01M",
+    "claim_text": "A lithium-ion secondary battery comprising: a cathode comprising lithium nickel cobalt manganese oxide; an anode comprising silicon-graphite composite nanoparticles; and a non-aqueous liquid electrolyte comprising fluoroethylene carbonate additive.",
+    "gold_patent_ids": ["US10892482B2", "EP3890123A1"],
+    "negative_patent_ids": ["US10454101B2", "US11205128B2"],
+    "expected_limitations": [
+      "cathode comprising lithium nickel cobalt manganese oxide",
+      "anode comprising silicon-graphite composite nanoparticles",
+      "non-aqueous liquid electrolyte comprising fluoroethylene carbonate additive"
+    ]
+  },
+  {
+    "query_id": "BENCH-BAT-002",
+    "domain": "Solid-State Batteries",
+    "cpc_subclass": "H01M",
+    "claim_text": "A solid-state composite electrolyte membrane for an all-solid-state lithium battery comprising: an inorganic sulfide-based solid electrolyte represented by Li6PS5Cl argyrodite; and a fluorinated copolymer binder comprising vinylidene fluoride and hexafluoropropylene units.",
+    "gold_patent_ids": ["US10454101B2", "WO2022049102A1"],
+    "negative_patent_ids": ["US10892482B2", "US10651289B2"],
+    "expected_limitations": [
+      "inorganic sulfide-based solid electrolyte represented by Li6PS5Cl argyrodite",
+      "fluorinated copolymer binder comprising vinylidene fluoride and hexafluoropropylene units"
+    ]
+  },
+  {
+    "query_id": "BENCH-AI-001",
+    "domain": "Neuromorphic Acceleration",
+    "cpc_subclass": "G06N",
+    "claim_text": "A neuromorphic computing device comprising: a crossbar array comprising a plurality of analog resistive random-access memory (ReRAM) cells at wordline-bitline intersections; a digital-to-analog converter array; and current-sensing analog-to-digital converters measuring column summation currents.",
+    "gold_patent_ids": ["US11205128B2", "EP3748520A1"],
+    "negative_patent_ids": ["US10892482B2", "US11854201B2"],
+    "expected_limitations": [
+      "crossbar array of analog resistive random-access memory (ReRAM) cells",
+      "digital-to-analog converter array",
+      "current-sensing analog-to-digital converters measuring column summation currents"
+    ]
+  },
+  {
+    "query_id": "BENCH-AI-002",
+    "domain": "Sparse Transformers & Accelerators",
+    "cpc_subclass": "G06N",
+    "claim_text": "A hardware accelerator for transformer neural networks comprising: a token sparsity engine configured to calculate token significance scores and prune tokens; a self-attention compute unit; and an on-chip SRAM buffer storing intermediate KV-cache states.",
+    "gold_patent_ids": ["US11854201B2", "WO2023190456A1"],
+    "negative_patent_ids": ["US11205128B2", "US11394520B2"],
+    "expected_limitations": [
+      "token sparsity engine calculating significance scores and pruning tokens",
+      "self-attention compute unit",
+      "on-chip SRAM buffer storing KV-cache"
+    ]
+  },
+  {
+    "query_id": "BENCH-SEMI-001",
+    "domain": "Gate-All-Around Transistors",
+    "cpc_subclass": "H01L",
+    "claim_text": "A semiconductor device comprising: a substrate; a vertical stack of horizontal silicon nanosheet channels; a high-k metal gate electrode wrapping around the nanosheet channels; source/drain epitaxial regions; and low-k inner dielectric spacers between the gate electrode and the source/drain regions.",
+    "gold_patent_ids": ["US10651289B2", "EP3654380A1"],
+    "negative_patent_ids": ["US11394520B2", "US10925910B2"],
+    "expected_limitations": [
+      "vertical stack of horizontal silicon nanosheet channels",
+      "high-k metal gate electrode wrapping around channels",
+      "low-k inner dielectric spacers between gate and source/drain regions"
+    ]
+  },
+  {
+    "query_id": "BENCH-BIO-001",
+    "domain": "mRNA Delivery Nanoparticles",
+    "cpc_subclass": "A61K",
+    "claim_text": "A pharmaceutical composition comprising lipid nanoparticles encapsulating messenger RNA, comprising an ionizable amino lipid with biodegradable ester linkages, a neutral helper phospholipid DSPC, cholesterol, and a PEGylated lipid conjugate.",
+    "gold_patent_ids": ["US10925910B2", "EP3818985A1"],
+    "negative_patent_ids": ["US10892482B2", "US11205128B2"],
+    "expected_limitations": [
+      "lipid nanoparticles encapsulating messenger RNA",
+      "ionizable amino lipid with biodegradable ester linkages",
+      "neutral helper phospholipid DSPC and cholesterol and PEGylated lipid"
+    ]
+  },
+  {
+    "query_id": "BENCH-CRYPTO-001",
+    "domain": "Cryptographic Distributed Consensus",
+    "cpc_subclass": "H04L",
+    "claim_text": "A computer-implemented method for achieving consensus in a distributed network comprising: receiving a block proposal containing cryptographic transactions; computing a verifiable random function (VRF) proof using a private key and an epoch seed; and generating a Boneh-Lynn-Shacham (BLS) threshold signature share.",
+    "gold_patent_ids": ["US11394520B2", "EP3849132A1"],
+    "negative_patent_ids": ["US10651289B2", "US11121280B2"],
+    "expected_limitations": [
+      "verifiable random function (VRF) proof using private key and epoch seed",
+      "Boneh-Lynn-Shacham (BLS) threshold signature share",
+      "validating state transition function"
+    ]
+  },
+  {
+    "query_id": "BENCH-QUANT-001",
+    "domain": "Superconducting Quantum Computing",
+    "cpc_subclass": "G06N",
+    "claim_text": "A superconducting quantum computing device comprising: a cryogenic substrate; a Josephson tunnel junction; a capacitive shunt electrode; and a superinductor element comprising a thin film of granular aluminum having high kinetic inductance.",
+    "gold_patent_ids": ["US11450890B2", "EP3885970A1"],
+    "negative_patent_ids": ["US11205128B2", "US11854201B2"],
+    "expected_limitations": [
+      "small-area Josephson tunnel junction and capacitive shunt electrode",
+      "superinductor element comprising thin film of granular aluminum",
+      "fluxonium qubit loop operating at cryogenic temperatures"
+    ]
+  },
+  {
+    "query_id": "BENCH-SOLAR-001",
+    "domain": "Perovskite-Silicon Tandem Photovoltaics",
+    "cpc_subclass": "H01L",
+    "claim_text": "A monolithic tandem photovoltaic cell comprising: a bottom crystalline silicon subcell; an intermediate recombination layer; a top perovskite subcell comprising a self-assembled monolayer of carbazole-phosphonic acid; a metal halide perovskite absorber layer; and an electron-selective C60 layer.",
+    "gold_patent_ids": ["US11121280B2", "EP3796410A1"],
+    "negative_patent_ids": ["US10454101B2", "US10651289B2"],
+    "expected_limitations": [
+      "bottom crystalline silicon subcell",
+      "intermediate recombination layer",
+      "self-assembled monolayer of carbazole-phosphonic acid hole transport layer",
+      "metal halide perovskite absorber layer"
+    ]
+  },
+  {
+    "query_id": "BENCH-LIDAR-001",
+    "domain": "Solid-State FMCW LiDAR",
+    "cpc_subclass": "G01S",
+    "claim_text": "A solid-state LiDAR sensor system comprising: a tunable laser source configured to generate a frequency-modulated continuous-wave (FMCW) optical beam; a silicon photonics optical phased array (OPA) chip; an optical receive aperture; and a balanced photodetector extracting simultaneous range and Doppler radial velocity.",
+    "gold_patent_ids": ["US11287510B2", "EP3822650A1"],
+    "negative_patent_ids": ["US10892482B2", "US11394520B2"],
+    "expected_limitations": [
+      "tunable laser source generating frequency-modulated continuous-wave (FMCW) beam",
+      "silicon photonics optical phased array (OPA) chip steering beam without moving parts",
+      "balanced photodetector extracting simultaneous range and Doppler radial velocity"
+    ]
+  }
+]

@@ -108,11 +108,11 @@ from tests.eval.harness import EvaluationHarness
 logger = get_logger(__name__)
 limiter = Limiter(key_func=get_remote_address)
 
-# Initialize database schema, seed patents and default enterprise org
+# Initialize database schema, seed default enterprise org/workspaces and patents
 init_db()
-seed_corpus_and_database()
 with SessionLocal() as bootstrap_db:
     ensure_seed_users_and_orgs(bootstrap_db)
+seed_corpus_and_database()
 
 iterative_engine = IterativeSearchEngine()
 

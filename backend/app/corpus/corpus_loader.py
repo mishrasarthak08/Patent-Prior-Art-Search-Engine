@@ -32,11 +32,28 @@ def seed_corpus_and_database(db: Session | None = None) -> int:
             from sqlalchemy import text
             db.execute(text("SELECT set_config('app.is_platform_admin', 'true', false);"))
 
+        # Ensure a default workspace exists for the default project
+        from backend.app.db.models import Workspace
+        ws = db.query(Workspace).filter(Workspace.id == "ws-energy-semi").first()
+        if not ws:
+            ws = db.query(Workspace).first()
+        if not ws:
+            ws = Workspace(
+                id="ws-energy-semi",
+                name="Energy & Solid-State Systems",
+                description="Prior-art search on solid-state battery chemistry and silicon anode composites.",
+                is_default=True,
+                workspace_type="ORGANIZATION",
+            )
+            db.add(ws)
+            db.flush()
+
         # Seed default project
         default_project = db.query(Project).filter(Project.id == "default-workspace").first()
         if not default_project:
             default_project = Project(
                 id="default-workspace",
+                workspace_id=ws.id,
                 name="Primary Prior-Art Research Workspace",
                 matter_number="MATTER-2026-CORE",
                 description="Default enterprise workspace for prior-art search, claim decomposition, and patent evidence charts.",

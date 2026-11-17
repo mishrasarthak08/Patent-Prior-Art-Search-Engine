@@ -4,7 +4,7 @@ services:
     name: patent-search-backend
     env: python
     region: oregon
-    plan: starter
+    plan: free
     buildCommand: pip install -r backend/requirements.txt
     startCommand: uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT
     envVars:
@@ -26,18 +26,18 @@ services:
     name: patent-search-frontend
     env: node
     region: oregon
-    plan: starter
+    plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
     startCommand: npm start -- -p $PORT
     envVars:
       - key: NODE_VERSION
         value: 20.11.0
-      - key: NEXT_PUBLIC_API_URL
+      - key: BACKEND_INTERNAL_URL
         fromService:
           type: web
           name: patent-search-backend
-          property: host
+          property: hostport
       - key: NEXT_PUBLIC_APP_API_KEY
         value: dev_key
 
@@ -47,4 +47,4 @@ databases:
     databaseName: patent_platform_pg
     user: patent_app_user
     region: oregon
-    plan: starter
+    plan: free

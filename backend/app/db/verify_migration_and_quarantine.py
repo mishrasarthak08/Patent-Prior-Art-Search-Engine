@@ -5,7 +5,6 @@ and guarantees zero unintended data loss, duplicate ownership, or cross-tenant l
 """
 
 import json
-import os
 import sqlite3
 import uuid
 from datetime import datetime
@@ -81,12 +80,14 @@ def verify_and_quarantine(db_path: str = "data/patent_platform.db") -> dict:
         else:
             # Ambiguous: Move to quarantine table
             q_id = str(uuid.uuid4())
-            q_data = json.dumps({
-                "annotation_id": annot_id,
-                "search_id": s_id,
-                "review_status": status,
-                "notes": notes,
-            })
+            q_data = json.dumps(
+                {
+                    "annotation_id": annot_id,
+                    "search_id": s_id,
+                    "review_status": status,
+                    "notes": notes,
+                }
+            )
             cursor.execute(
                 """
                 INSERT INTO quarantine_records (id, entity_type, entity_id, original_data, reason, quarantined_at)
@@ -144,12 +145,15 @@ def verify_and_quarantine(db_path: str = "data/patent_platform.db") -> dict:
     duplicate_memberships = cursor.fetchall()
     for ws_id, u_id, count in duplicate_memberships:
         # Keep lowest ID, delete redundant copies
-        cursor.execute("""
+        cursor.execute(
+            """
             DELETE FROM workspace_memberships 
             WHERE workspace_id = ? AND user_id = ? AND id NOT IN (
                 SELECT MIN(id) FROM workspace_memberships WHERE workspace_id = ? AND user_id = ?
             );
-        """, (ws_id, u_id, ws_id, u_id))
+        """,
+            (ws_id, u_id, ws_id, u_id),
+        )
         print(f"✓ Pruned {count - 1} duplicate memberships for User {u_id} in Workspace {ws_id}")
 
     conn.commit()
@@ -161,14 +165,38 @@ def verify_and_quarantine(db_path: str = "data/patent_platform.db") -> dict:
 
     # Verify 0 orphan records remain across all core foreign keys
     checks = [
-        ("projects.workspace_id -> workspaces.id", "SELECT COUNT(*) FROM projects WHERE workspace_id NOT IN (SELECT id FROM workspaces)"),
-        ("projects.assigned_to_user_id -> users.id", "SELECT COUNT(*) FROM projects WHERE assigned_to_user_id NOT IN (SELECT id FROM users)"),
-        ("search_executions.workspace_id -> workspaces.id", "SELECT COUNT(*) FROM search_executions WHERE workspace_id NOT IN (SELECT id FROM workspaces)"),
-        ("search_executions.user_id -> users.id", "SELECT COUNT(*) FROM search_executions WHERE user_id NOT IN (SELECT id FROM users)"),
-        ("evidence_mappings.workspace_id -> workspaces.id", "SELECT COUNT(*) FROM evidence_mappings WHERE workspace_id NOT IN (SELECT id FROM workspaces)"),
-        ("annotations.workspace_id -> workspaces.id", "SELECT COUNT(*) FROM annotations WHERE workspace_id NOT IN (SELECT id FROM workspaces)"),
-        ("annotations.user_id -> users.id", "SELECT COUNT(*) FROM annotations WHERE user_id NOT IN (SELECT id FROM users)"),
-        ("saved_documents.workspace_id -> workspaces.id", "SELECT COUNT(*) FROM saved_documents WHERE workspace_id NOT IN (SELECT id FROM workspaces)"),
+        (
+            "projects.workspace_id -> workspaces.id",
+            "SELECT COUNT(*) FROM projects WHERE workspace_id NOT IN (SELECT id FROM workspaces)",
+        ),
+        (
+            "projects.assigned_to_user_id -> users.id",
+            "SELECT COUNT(*) FROM projects WHERE assigned_to_user_id NOT IN (SELECT id FROM users)",
+        ),
+        (
+            "search_executions.workspace_id -> workspaces.id",
+            "SELECT COUNT(*) FROM search_executions WHERE workspace_id NOT IN (SELECT id FROM workspaces)",
+        ),
+        (
+            "search_executions.user_id -> users.id",
+            "SELECT COUNT(*) FROM search_executions WHERE user_id NOT IN (SELECT id FROM users)",
+        ),
+        (
+            "evidence_mappings.workspace_id -> workspaces.id",
+            "SELECT COUNT(*) FROM evidence_mappings WHERE workspace_id NOT IN (SELECT id FROM workspaces)",
+        ),
+        (
+            "annotations.workspace_id -> workspaces.id",
+            "SELECT COUNT(*) FROM annotations WHERE workspace_id NOT IN (SELECT id FROM workspaces)",
+        ),
+        (
+            "annotations.user_id -> users.id",
+            "SELECT COUNT(*) FROM annotations WHERE user_id NOT IN (SELECT id FROM users)",
+        ),
+        (
+            "saved_documents.workspace_id -> workspaces.id",
+            "SELECT COUNT(*) FROM saved_documents WHERE workspace_id NOT IN (SELECT id FROM workspaces)",
+        ),
     ]
 
     print("\nForeign Key Reference Integrity Check:")
@@ -201,4 +229,3 @@ if __name__ == "__main__":
     report = verify_and_quarantine()
     with open("data/migration_verification_report.json", "w") as f:
         json.dump(report, f, indent=2)
-

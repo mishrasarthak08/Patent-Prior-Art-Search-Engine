@@ -7,8 +7,8 @@ from typing import Literal
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-from backend.app.schemas import ClaimElement, DecomposedClaim
 from backend.app.config import settings
+from backend.app.schemas import ClaimElement, DecomposedClaim
 from backend.app.utils.key_manager import get_all_keys, get_current_api_key, rotate_api_key
 
 logger = logging.getLogger(__name__)
@@ -200,7 +200,9 @@ class QueryUnderstandingPipeline:
 
     def decompose_claim(self, raw_claim: str, max_retries: int = 1) -> DecomposedClaim:
         if settings.CONFIDENTIAL_MODE or not self.llm:
-            logger.info("Executing zero-egress in-process heuristic decomposition (Confidential Mode active or LLM offline).")
+            logger.info(
+                "Executing zero-egress in-process heuristic decomposition (Confidential Mode active or LLM offline)."
+            )
             return self.heuristic_decompose(raw_claim)
 
         prompt = ChatPromptTemplate.from_messages(

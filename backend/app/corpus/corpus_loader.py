@@ -30,10 +30,12 @@ def seed_corpus_and_database(db: Session | None = None) -> int:
         bind = db.get_bind()
         if bind and bind.dialect.name == "postgresql":
             from sqlalchemy import text
+
             db.execute(text("SELECT set_config('app.is_platform_admin', 'true', false);"))
 
         # Ensure a default workspace exists for the default project
         from backend.app.db.models import Workspace
+
         ws = db.query(Workspace).filter(Workspace.id == "ws-energy-semi").first()
         if not ws:
             ws = db.query(Workspace).first()

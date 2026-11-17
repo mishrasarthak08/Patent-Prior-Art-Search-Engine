@@ -10,6 +10,7 @@ import sqlite3
 import subprocess
 from datetime import datetime
 from typing import Any
+
 from sqlalchemy import create_engine, text
 
 
@@ -25,6 +26,7 @@ def calculate_file_sha256(filepath: str) -> str:
 # ==============================================================================
 # SQLite Verified Backup & Restore
 # ==============================================================================
+
 
 def create_verified_backup(
     db_path: str = "data/patent_platform.db",
@@ -130,6 +132,7 @@ def restore_verified_backup(
 # PostgreSQL Verified Backup & Restore
 # ==============================================================================
 
+
 def create_postgresql_backup(
     db_name: str = "patent_platform_pg",
     backup_dir: str = "data/backups",
@@ -147,13 +150,16 @@ def create_postgresql_backup(
     # Run pg_dump
     cmd = [
         "pg_dump",
-        "-h", host,
-        "-d", db_name,
+        "-h",
+        host,
+        "-d",
+        db_name,
         "--clean",
         "--if-exists",
         "--no-owner",
         "--no-privileges",
-        "-f", backup_path,
+        "-f",
+        backup_path,
     ]
     res = subprocess.run(cmd, capture_output=True, text=True)
     if res.returncode != 0:
@@ -190,7 +196,7 @@ def restore_postgresql_backup(
     # Verify sha256 if .sha256 file exists
     meta_path = f"{backup_path}.sha256"
     if os.path.exists(meta_path):
-        with open(meta_path, "r") as f:
+        with open(meta_path) as f:
             expected_hash = f.read().split()[0]
         actual_hash = calculate_file_sha256(backup_path)
         if expected_hash != actual_hash:

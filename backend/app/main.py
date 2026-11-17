@@ -7,7 +7,7 @@ from typing import Any, cast
 
 import requests
 from asgi_correlation_id import CorrelationIdMiddleware
-from fastapi import Depends, FastAPI, Header, HTTPException, Request, Security
+from fastapi import Depends, FastAPI, HTTPException, Request, Security
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -28,13 +28,11 @@ from backend.app.auth.security import (
     get_effective_workspace_role,
     get_password_hash,
     require_platform_admin,
-    require_workspace_permission,
     set_database_tenant_context,
     terminate_support_session,
     verify_password,
 )
 from backend.app.config import settings
-from backend.app.services.email_service import email_service
 from backend.app.corpus.corpus_loader import seed_corpus_and_database
 from backend.app.corpus.ingestion_engine import (
     get_corpus_coverage_report,
@@ -49,7 +47,6 @@ from backend.app.db.models import (
     PatentDocument,
     Project,
     ProjectMember,
-    QuarantineRecord,
     SavedDocument,
     SearchExecution,
     SupportSession,
@@ -60,7 +57,6 @@ from backend.app.db.models import (
 from backend.app.db.session import SessionLocal, get_db, init_db
 from backend.app.evidence.ledger import (
     locate_text_coordinates,
-    record_evidence_in_ledger,
     review_evidence_entry,
 )
 from backend.app.logger import get_logger
@@ -103,6 +99,7 @@ from backend.app.schemas import (
     WorkspaceCreate,
     WorkspaceOut,
 )
+from backend.app.services.email_service import email_service
 from tests.eval.harness import EvaluationHarness
 
 logger = get_logger(__name__)
@@ -420,9 +417,7 @@ def export_user_data(
 ):
     """GDPR/CCPA compliant customer data takeout containing user's profile and private research."""
     personal_ws = (
-        db.query(Workspace)
-        .filter(Workspace.owner_user_id == user.id, Workspace.workspace_type == "PERSONAL")
-        .all()
+        db.query(Workspace).filter(Workspace.owner_user_id == user.id, Workspace.workspace_type == "PERSONAL").all()
     )
     ws_ids = list({w.id for w in personal_ws} | {active_ws.id})
 
@@ -480,9 +475,7 @@ def delete_user_account(
 ):
     """Cascading account closure. Deletes user's personal workspaces, memberships, and private data."""
     personal_ws = (
-        db.query(Workspace)
-        .filter(Workspace.owner_user_id == user.id, Workspace.workspace_type == "PERSONAL")
-        .all()
+        db.query(Workspace).filter(Workspace.owner_user_id == user.id, Workspace.workspace_type == "PERSONAL").all()
     )
     ws_ids = list({w.id for w in personal_ws} | {active_ws.id})
     for wid in ws_ids:
@@ -593,9 +586,7 @@ def list_workspaces(user: User = Depends(get_authenticated_user), db: Session = 
     # Find all workspace IDs where user is member
     member_ws_ids = [
         row[0]
-        for row in db.query(WorkspaceMembership.workspace_id)
-        .filter(WorkspaceMembership.user_id == user.id)
-        .all()
+        for row in db.query(WorkspaceMembership.workspace_id).filter(WorkspaceMembership.user_id == user.id).all()
     ]
 
     query = db.query(Workspace).filter(
@@ -730,7 +721,9 @@ def invite_organization_member(
     db.add(WorkspaceMembership(id=str(uuid.uuid4()), workspace_id=p_ws.id, user_id=new_user_id, role="OWNER"))
 
     # Grant access to organization's workspaces
-    org_workspaces = db.query(Workspace).filter(Workspace.org_id == user.org_id, Workspace.workspace_type == "ORGANIZATION").all()
+    org_workspaces = (
+        db.query(Workspace).filter(Workspace.org_id == user.org_id, Workspace.workspace_type == "ORGANIZATION").all()
+    )
     for ow in org_workspaces:
         db.add(WorkspaceMembership(id=str(uuid.uuid4()), workspace_id=ow.id, user_id=new_user_id, role=req.role))
 
@@ -738,7 +731,9 @@ def invite_organization_member(
     db.commit()
 
     log_audit_event(db, user, "INVITE_MEMBER", "User", str(invited_user.id), {"email": req.email, "role": req.role})
-    email_service.send_workspace_invitation_email(req.email, user.full_name or "An administrator", "Enterprise Workspace", req.role)
+    email_service.send_workspace_invitation_email(
+        req.email, user.full_name or "An administrator", "Enterprise Workspace", req.role
+    )
     return {"status": "invited", "user_id": str(invited_user.id), "email": str(invited_user.email)}
 
 
@@ -752,12 +747,18 @@ def get_organization_usage(
     if user.org_id:
         org_ws_ids = [w[0] for w in db.query(Workspace.id).filter(Workspace.org_id == user.org_id).all()]
         searches_count = db.query(SearchExecution).filter(SearchExecution.workspace_id.in_(org_ws_ids)).count()
-        docs_viewed = db.query(AuditLog).filter(AuditLog.org_id == user.org_id, AuditLog.action == "VIEW_DOCUMENT").count()
-        exports_count = db.query(AuditLog).filter(AuditLog.org_id == user.org_id, AuditLog.action == "EXPORT_DOSSIER").count()
+        docs_viewed = (
+            db.query(AuditLog).filter(AuditLog.org_id == user.org_id, AuditLog.action == "VIEW_DOCUMENT").count()
+        )
+        exports_count = (
+            db.query(AuditLog).filter(AuditLog.org_id == user.org_id, AuditLog.action == "EXPORT_DOSSIER").count()
+        )
     else:
         searches_count = db.query(SearchExecution).filter(SearchExecution.workspace_id == active_workspace.id).count()
         docs_viewed = db.query(AuditLog).filter(AuditLog.user_id == user.id, AuditLog.action == "VIEW_DOCUMENT").count()
-        exports_count = db.query(AuditLog).filter(AuditLog.user_id == user.id, AuditLog.action == "EXPORT_DOSSIER").count()
+        exports_count = (
+            db.query(AuditLog).filter(AuditLog.user_id == user.id, AuditLog.action == "EXPORT_DOSSIER").count()
+        )
 
     return UsageMetricOut(
         period_month=period,
@@ -893,7 +894,14 @@ def create_matter(
     db.add(pmem)
     db.commit()
 
-    log_audit_event(db, user, "CREATE_MATTER", "Matter", str(new_proj.id), {"matter_number": req.matter_number, "is_confidential": req.is_confidential})
+    log_audit_event(
+        db,
+        user,
+        "CREATE_MATTER",
+        "Matter",
+        str(new_proj.id),
+        {"matter_number": req.matter_number, "is_confidential": req.is_confidential},
+    )
     m = MatterOut.model_validate(new_proj)
     m.searches_count = 0
     m.saved_documents_count = 0
@@ -928,7 +936,11 @@ def get_matter_details(
     # Ethical Wall Check: if confidential matter, only assigned members or creator have access
     if project.is_confidential and not getattr(user, "is_platform_admin", False):
         member_ids = [m.user_id for m in project.members]
-        if user.id not in member_ids and user.id != project.created_by_user_id and user.id != project.assigned_to_user_id:
+        if (
+            user.id not in member_ids
+            and user.id != project.created_by_user_id
+            and user.id != project.assigned_to_user_id
+        ):
             raise HTTPException(
                 status_code=403,
                 detail="Access Denied: Ethical Wall restricted matter. You must be explicitly assigned to this matter.",
@@ -1001,7 +1013,11 @@ def list_matter_members(
 
     if project.is_confidential and not getattr(user, "is_platform_admin", False):
         member_ids = [m.user_id for m in project.members]
-        if user.id not in member_ids and user.id != project.created_by_user_id and user.id != project.assigned_to_user_id:
+        if (
+            user.id not in member_ids
+            and user.id != project.created_by_user_id
+            and user.id != project.assigned_to_user_id
+        ):
             raise HTTPException(status_code=403, detail="Forbidden: Ethical wall restricts member inspection")
 
     results = []
@@ -1033,13 +1049,22 @@ def add_matter_member(
         raise HTTPException(status_code=404, detail="Matter not found")
 
     member_ids = [m.user_id for m in project.members if m.role == "OWNER"]
-    is_owner = user.id in member_ids or user.id == project.created_by_user_id or getattr(user, "is_platform_admin", False)
+    is_owner = (
+        user.id in member_ids or user.id == project.created_by_user_id or getattr(user, "is_platform_admin", False)
+    )
     if not is_owner:
         role = get_effective_workspace_role(user, active_workspace, db)
         if role not in ["OWNER", "ADMIN", "PERSONAL_OWNER"]:
-            raise HTTPException(status_code=403, detail="Forbidden: Only matter owner or admin can add team members across ethical walls")
+            raise HTTPException(
+                status_code=403,
+                detail="Forbidden: Only matter owner or admin can add team members across ethical walls",
+            )
 
-    existing = db.query(ProjectMember).filter(ProjectMember.project_id == project_id, ProjectMember.user_id == req.user_id).first()
+    existing = (
+        db.query(ProjectMember)
+        .filter(ProjectMember.project_id == project_id, ProjectMember.user_id == req.user_id)
+        .first()
+    )
     if existing:
         existing.role = req.role
         db.commit()
@@ -1063,7 +1088,9 @@ def add_matter_member(
     db.add(pm)
     db.commit()
     db.refresh(pm)
-    log_audit_event(db, user, "ADD_MATTER_MEMBER", "Matter", project_id, {"target_user_id": req.user_id, "role": req.role})
+    log_audit_event(
+        db, user, "ADD_MATTER_MEMBER", "Matter", project_id, {"target_user_id": req.user_id, "role": req.role}
+    )
     return MatterMemberOut(
         id=pm.id,
         project_id=pm.project_id,
@@ -1088,11 +1115,17 @@ def remove_matter_member(
         raise HTTPException(status_code=404, detail="Matter not found")
 
     member_ids = [m.user_id for m in project.members if m.role == "OWNER"]
-    is_owner = user.id in member_ids or user.id == project.created_by_user_id or getattr(user, "is_platform_admin", False)
+    is_owner = (
+        user.id in member_ids or user.id == project.created_by_user_id or getattr(user, "is_platform_admin", False)
+    )
     if not is_owner and user.id != target_user_id:
         raise HTTPException(status_code=403, detail="Forbidden: Cannot remove member from ethical wall")
 
-    pm = db.query(ProjectMember).filter(ProjectMember.project_id == project_id, ProjectMember.user_id == target_user_id).first()
+    pm = (
+        db.query(ProjectMember)
+        .filter(ProjectMember.project_id == project_id, ProjectMember.user_id == target_user_id)
+        .first()
+    )
     if pm:
         db.delete(pm)
         db.commit()
@@ -1151,10 +1184,7 @@ def delete_matter(
         raise HTTPException(status_code=404, detail="Matter not found")
 
     role = get_effective_workspace_role(user, active_workspace, db)
-    can_delete = (
-        role in ["PERSONAL_OWNER", "OWNER", "ADMIN"]
-        or project.assigned_to_user_id == user.id
-    )
+    can_delete = role in ["PERSONAL_OWNER", "OWNER", "ADMIN"] or project.assigned_to_user_id == user.id
     if not can_delete:
         raise HTTPException(status_code=403, detail="Insufficient workspace permissions to delete this matter")
 
@@ -1237,10 +1267,7 @@ async def search(
     if isinstance(decomposed, dict):
         preamble = decomposed.get("preamble")
         transition = decomposed.get("transition", "comprising")
-        elements_list = [
-            e if isinstance(e, dict) else e.model_dump()
-            for e in decomposed.get("elements", [])
-        ]
+        elements_list = [e if isinstance(e, dict) else e.model_dump() for e in decomposed.get("elements", [])]
         query_claim_obj = DecomposedClaim.model_validate(decomposed)
     else:
         preamble = decomposed.preamble
@@ -1473,7 +1500,9 @@ def save_document(
     # Validate project belongs to this workspace if supplied
     target_project_id = None
     if req.project_id:
-        proj = db.query(Project).filter(Project.id == req.project_id, Project.workspace_id == active_workspace.id).first()
+        proj = (
+            db.query(Project).filter(Project.id == req.project_id, Project.workspace_id == active_workspace.id).first()
+        )
         if proj:
             target_project_id = proj.id
 
@@ -1663,7 +1692,6 @@ def search_iterative(
 
     # Store search execution and evidence mappings scoped to active workspace
     try:
-
         elements_list = [e.model_dump() for e in decomposed.elements]
         search_rec = SearchExecution(
             id=search_id,

@@ -4,7 +4,6 @@ Safely upgrades SQLite schema for Patent Prior-Art Search Engine to full tenant 
 Preserves existing data, backfills workspace associations, and creates personal workspaces.
 """
 
-import datetime
 import sqlite3
 import sys
 import uuid
@@ -74,7 +73,9 @@ def run_migration():
                 FOREIGN KEY(org_id) REFERENCES organizations (id)
             );
             """)
-            cursor.execute("INSERT INTO workspaces_new SELECT id, org_id, name, description, is_default, created_at, 'ORGANIZATION', NULL FROM workspaces;")
+            cursor.execute(
+                "INSERT INTO workspaces_new SELECT id, org_id, name, description, is_default, created_at, 'ORGANIZATION', NULL FROM workspaces;"
+            )
             cursor.execute("DROP TABLE workspaces;")
             cursor.execute("ALTER TABLE workspaces_new RENAME TO workspaces;")
             cursor.execute("CREATE INDEX IF NOT EXISTS ix_workspaces_org_id ON workspaces(org_id);")
@@ -143,10 +144,13 @@ def run_migration():
         # Check default workspaces
         cursor.execute("SELECT id FROM workspaces WHERE id = 'ws-energy-semi';")
         if not cursor.fetchone():
-            cursor.execute("""
+            cursor.execute(
+                """
             INSERT INTO workspaces (id, org_id, name, description, is_default, workspace_type, owner_user_id)
             VALUES ('ws-energy-semi', 'org-veritas-primary', 'Energy & Solid-State Systems', 'Solid-state battery chemistry and silicon anode composites.', 1, 'ORGANIZATION', ?);
-            """, (admin_id,))
+            """,
+                (admin_id,),
+            )
 
         cursor.execute("UPDATE workspaces SET workspace_type = 'ORGANIZATION' WHERE workspace_type IS NULL;")
 
@@ -157,34 +161,53 @@ def run_migration():
             personal_ws_id = f"ws-personal-{u_id[:8]}"
             cursor.execute("SELECT id FROM workspaces WHERE id = ?;", (personal_ws_id,))
             if not cursor.fetchone():
-                cursor.execute("""
+                cursor.execute(
+                    """
                 INSERT INTO workspaces (id, org_id, name, description, is_default, workspace_type, owner_user_id)
                 VALUES (?, ?, ?, 'Private personal patent research workbench.', 0, 'PERSONAL', ?);
-                """, (personal_ws_id, org_id, f"{full_name}'s Research Workspace", u_id))
+                """,
+                    (personal_ws_id, org_id, f"{full_name}'s Research Workspace", u_id),
+                )
                 print(f"Created personal workspace {personal_ws_id} for user {email}")
 
             # Ensure membership in personal workspace
-            cursor.execute("""
+            cursor.execute(
+                """
             INSERT OR IGNORE INTO workspace_memberships (id, workspace_id, user_id, role)
             VALUES (?, ?, ?, 'OWNER');
-            """, (str(uuid.uuid4()), personal_ws_id, u_id))
+            """,
+                (str(uuid.uuid4()), personal_ws_id, u_id),
+            )
 
             # Set default_workspace_id
-            target_default = "ws-energy-semi" if (org_id == "org-veritas-primary" and role in ["OWNER", "ADMIN"]) else personal_ws_id
-            cursor.execute("UPDATE users SET default_workspace_id = ?, onboarding_completed = 1 WHERE id = ?;", (target_default, u_id))
+            target_default = (
+                "ws-energy-semi" if (org_id == "org-veritas-primary" and role in ["OWNER", "ADMIN"]) else personal_ws_id
+            )
+            cursor.execute(
+                "UPDATE users SET default_workspace_id = ?, onboarding_completed = 1 WHERE id = ?;",
+                (target_default, u_id),
+            )
 
             # If user belongs to org-veritas-primary, grant membership in org workspaces
             if org_id:
-                cursor.execute("SELECT id FROM workspaces WHERE org_id = ? AND workspace_type = 'ORGANIZATION';", (org_id,))
+                cursor.execute(
+                    "SELECT id FROM workspaces WHERE org_id = ? AND workspace_type = 'ORGANIZATION';", (org_id,)
+                )
                 org_workspaces = cursor.fetchall()
                 for (ows_id,) in org_workspaces:
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                     INSERT OR IGNORE INTO workspace_memberships (id, workspace_id, user_id, role)
                     VALUES (?, ?, ?, ?);
-                    """, (str(uuid.uuid4()), ows_id, u_id, role or "ATTORNEY"))
+                    """,
+                        (str(uuid.uuid4()), ows_id, u_id, role or "ATTORNEY"),
+                    )
 
         # 9. Backfill projects with valid workspace_id
-        cursor.execute("UPDATE projects SET workspace_id = 'ws-energy-semi', org_id = 'org-veritas-primary', assigned_to_user_id = ? WHERE workspace_id IS NULL OR workspace_id = '';", (admin_id,))
+        cursor.execute(
+            "UPDATE projects SET workspace_id = 'ws-energy-semi', org_id = 'org-veritas-primary', assigned_to_user_id = ? WHERE workspace_id IS NULL OR workspace_id = '';",
+            (admin_id,),
+        )
         print("Backfilled projects with workspace_id = 'ws-energy-semi'.")
 
         # 10. Backfill search_executions
@@ -195,11 +218,14 @@ def run_migration():
         WHERE (workspace_id IS NULL OR workspace_id = '') AND project_id IS NOT NULL AND project_id != 'default-workspace';
         """)
         # For default-workspace or unassigned
-        cursor.execute("""
+        cursor.execute(
+            """
         UPDATE search_executions
         SET workspace_id = 'ws-energy-semi', user_id = ?
         WHERE workspace_id IS NULL OR workspace_id = '';
-        """, (admin_id,))
+        """,
+            (admin_id,),
+        )
         cursor.execute("UPDATE search_executions SET user_id = ? WHERE user_id IS NULL;", (admin_id,))
         print("Backfilled search_executions workspace_id and user_id.")
 
@@ -210,7 +236,10 @@ def run_migration():
             user_id = (SELECT user_id FROM search_executions WHERE search_executions.id = evidence_mappings.search_id)
         WHERE workspace_id IS NULL OR workspace_id = '';
         """)
-        cursor.execute("UPDATE evidence_mappings SET workspace_id = 'ws-energy-semi', user_id = ? WHERE workspace_id IS NULL;", (admin_id,))
+        cursor.execute(
+            "UPDATE evidence_mappings SET workspace_id = 'ws-energy-semi', user_id = ? WHERE workspace_id IS NULL;",
+            (admin_id,),
+        )
         print("Backfilled evidence_mappings workspace_id and user_id.")
 
         # 12. Backfill annotations

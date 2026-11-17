@@ -12,11 +12,17 @@ Tests:
 """
 
 import uuid
-import pytest
+
 from fastapi.testclient import TestClient
-from backend.app.main import app
+
+from backend.app.db.models import (
+    EvidenceMapping,
+    PatentDocument,
+    Project,
+    SearchExecution,
+)
 from backend.app.db.session import SessionLocal
-from backend.app.db.models import User, Organization, Workspace, Project, SearchExecution, EvidenceMapping, SavedDocument, PatentDocument
+from backend.app.main import app
 
 client = TestClient(app)
 
@@ -101,12 +107,15 @@ def test_four_persona_tenant_isolation_and_idor_prevention():
     """
     # 1. Register Persona A (Org Alpha)
     alpha_email = f"alice_{uuid.uuid4().hex[:6]}@alphalaw.com"
-    res_a = client.post("/api/v1/auth/register", json={
-        "email": alpha_email,
-        "full_name": "Alice Alpha, Esq.",
-        "password": "Password123!",
-        "organization_name": "Alpha Patent Law Group",
-    })
+    res_a = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": alpha_email,
+            "full_name": "Alice Alpha, Esq.",
+            "password": "Password123!",
+            "organization_name": "Alpha Patent Law Group",
+        },
+    )
     assert res_a.status_code == 200
     token_a = res_a.json()["access_token"]
     headers_a_auth = {"Authorization": f"Bearer {token_a}"}
@@ -120,10 +129,9 @@ def test_four_persona_tenant_isolation_and_idor_prevention():
 
     # 2. Invite Persona B into Org Alpha
     bob_email = f"bob_{uuid.uuid4().hex[:6]}@alphalaw.com"
-    inv_res = client.post("/api/v1/organization/invite", json={
-        "email": bob_email,
-        "role": "RESEARCHER"
-    }, headers=headers_a_org)
+    inv_res = client.post(
+        "/api/v1/organization/invite", json={"email": bob_email, "role": "RESEARCHER"}, headers=headers_a_org
+    )
     assert inv_res.status_code == 200
 
     # Login Persona B
@@ -134,12 +142,15 @@ def test_four_persona_tenant_isolation_and_idor_prevention():
 
     # 3. Register Persona C (Org Beta)
     beta_email = f"carol_{uuid.uuid4().hex[:6]}@betatech.com"
-    res_c = client.post("/api/v1/auth/register", json={
-        "email": beta_email,
-        "full_name": "Carol Beta, CTO",
-        "password": "Password123!",
-        "organization_name": "Beta Quantum Innovations",
-    })
+    res_c = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": beta_email,
+            "full_name": "Carol Beta, CTO",
+            "password": "Password123!",
+            "organization_name": "Beta Quantum Innovations",
+        },
+    )
     assert res_c.status_code == 200
     token_c = res_c.json()["access_token"]
     ws_c_list = client.get("/api/v1/workspaces", headers={"Authorization": f"Bearer {token_c}"}).json()
@@ -148,11 +159,14 @@ def test_four_persona_tenant_isolation_and_idor_prevention():
 
     # 4. Register Persona D (Personal User)
     david_email = f"david_{uuid.uuid4().hex[:6]}@inventor.org"
-    res_d = client.post("/api/v1/auth/register", json={
-        "email": david_email,
-        "full_name": "David Solo Inventor",
-        "password": "Password123!",
-    })
+    res_d = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": david_email,
+            "full_name": "David Solo Inventor",
+            "password": "Password123!",
+        },
+    )
     assert res_d.status_code == 200
     token_d = res_d.json()["access_token"]
     ws_d_list = client.get("/api/v1/workspaces", headers={"Authorization": f"Bearer {token_d}"}).json()
@@ -192,18 +206,21 @@ def test_four_persona_tenant_isolation_and_idor_prevention():
     assert idor_d.status_code == 404
 
     # Persona C attempting to forge X-Workspace-Id to Org Alpha's workspace MUST receive 403 Forbidden
-    forged_c = client.get(f"/api/v1/matters/{m1_id}", headers={
-        "Authorization": f"Bearer {token_c}",
-        "X-Workspace-Id": org_ws_a["id"]
-    })
+    forged_c = client.get(
+        f"/api/v1/matters/{m1_id}", headers={"Authorization": f"Bearer {token_c}", "X-Workspace-Id": org_ws_a["id"]}
+    )
     assert forged_c.status_code == 403
 
     # --- Test Case 3: Personal Workspace Privacy within Organization ---
     # Alice creates a confidential private matter in her PERSONAL workspace
-    priv_matter_res = client.post("/api/v1/matters", json={
-        "name": "Alice Private Invention Diary",
-        "technical_domain": "Personal IP",
-    }, headers=headers_a_priv)
+    priv_matter_res = client.post(
+        "/api/v1/matters",
+        json={
+            "name": "Alice Private Invention Diary",
+            "technical_domain": "Personal IP",
+        },
+        headers=headers_a_priv,
+    )
     assert priv_matter_res.status_code == 200
     priv_matter_id = priv_matter_res.json()["id"]
 
@@ -211,18 +228,22 @@ def test_four_persona_tenant_isolation_and_idor_prevention():
     assert not any(m["id"] == priv_matter_id for m in client.get("/api/v1/matters", headers=headers_b_org).json())
 
     # Bob attempting to forge X-Workspace-Id to Alice's personal workspace MUST receive 403
-    bob_probe = client.get(f"/api/v1/matters/{priv_matter_id}", headers={
-        "Authorization": f"Bearer {token_b}",
-        "X-Workspace-Id": personal_ws_a["id"]
-    })
+    bob_probe = client.get(
+        f"/api/v1/matters/{priv_matter_id}",
+        headers={"Authorization": f"Bearer {token_b}", "X-Workspace-Id": personal_ws_a["id"]},
+    )
     assert bob_probe.status_code == 403
 
     # --- Test Case 4: Search & Evidence Ledger Isolation ---
     claim_text = "A lithium secondary battery comprising a silicon-graphite composite anode and a fluoroethylene carbonate electrolyte."
-    search_res = client.post("/api/v1/search", json={
-        "raw_claim": claim_text,
-        "project_id": m1_id,
-    }, headers=headers_a_org)
+    search_res = client.post(
+        "/api/v1/search",
+        json={
+            "raw_claim": claim_text,
+            "project_id": m1_id,
+        },
+        headers=headers_a_org,
+    )
     assert search_res.status_code == 200
     search_id = search_res.json()["search_id"]
 
@@ -239,11 +260,15 @@ def test_four_persona_tenant_isolation_and_idor_prevention():
     assert search_c_idor.status_code == 404
 
     # --- Test Case 5: Saved Document Isolation ---
-    save_doc_res = client.post("/api/v1/saved-documents", json={
-        "doc_id": "US10892482B2",
-        "tags": ["Confidential-Strategy-Alpha"],
-        "notes": "Key reference for litigation defense."
-    }, headers=headers_a_org)
+    save_doc_res = client.post(
+        "/api/v1/saved-documents",
+        json={
+            "doc_id": "US10892482B2",
+            "tags": ["Confidential-Strategy-Alpha"],
+            "notes": "Key reference for litigation defense.",
+        },
+        headers=headers_a_org,
+    )
     assert save_doc_res.status_code == 200
 
     saved_c = client.get("/api/v1/saved-documents", headers=headers_c_org).json()
@@ -263,11 +288,14 @@ def test_internal_platform_data_restricted_to_admins():
     """Class 4: Evaluation benchmarks and internal ablations must return 403 to non-admin users."""
     # Register non-admin researcher
     user_email = f"researcher_{uuid.uuid4().hex[:6]}@practice.com"
-    reg = client.post("/api/v1/auth/register", json={
-        "email": user_email,
-        "full_name": "Junior Researcher",
-        "password": "Password123!",
-    })
+    reg = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": user_email,
+            "full_name": "Junior Researcher",
+            "password": "Password123!",
+        },
+    )
     token = reg.json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
 
@@ -293,6 +321,7 @@ def test_zero_data_loss_migration_verification():
     """Verifies that all 30 pre-existing matters, 96 searches, 384 evidence mappings, and 52 patents remain intact."""
     with SessionLocal() as db:
         from sqlalchemy import text
+
         db.execute(text("SELECT set_config('app.is_platform_admin', 'true', false)"))
         patents_count = db.query(PatentDocument).count()
         assert patents_count >= 52
@@ -321,34 +350,48 @@ def test_cross_workspace_relationship_rejection():
     """Every cross-workspace relationship must be strictly rejected (400 Bad Request or 404 Not Found via kernel RLS)."""
     # 1. Create Workspace A & Matter A
     email_a = f"owner_a_{uuid.uuid4().hex[:6]}@firm-a.com"
-    res_a = client.post("/api/v1/auth/register", json={
-        "email": email_a,
-        "full_name": "Attorney A",
-        "password": "Password123!",
-        "organization_name": "Firm Alpha",
-    })
+    res_a = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": email_a,
+            "full_name": "Attorney A",
+            "password": "Password123!",
+            "organization_name": "Firm Alpha",
+        },
+    )
     token_a = res_a.json()["access_token"]
     ws_a = client.get("/api/v1/workspaces", headers={"Authorization": f"Bearer {token_a}"}).json()[1]
-    m_a = client.post("/api/v1/matters", json={
-        "name": "Firm Alpha Proprietary Patent Matter",
-    }, headers={"Authorization": f"Bearer {token_a}", "X-Workspace-Id": ws_a["id"]}).json()
+    m_a = client.post(
+        "/api/v1/matters",
+        json={
+            "name": "Firm Alpha Proprietary Patent Matter",
+        },
+        headers={"Authorization": f"Bearer {token_a}", "X-Workspace-Id": ws_a["id"]},
+    ).json()
 
     # 2. Create Workspace B
     email_b = f"owner_b_{uuid.uuid4().hex[:6]}@firm-b.com"
-    res_b = client.post("/api/v1/auth/register", json={
-        "email": email_b,
-        "full_name": "Attorney B",
-        "password": "Password123!",
-        "organization_name": "Firm Beta",
-    })
+    res_b = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": email_b,
+            "full_name": "Attorney B",
+            "password": "Password123!",
+            "organization_name": "Firm Beta",
+        },
+    )
     token_b = res_b.json()["access_token"]
     ws_b = client.get("/api/v1/workspaces", headers={"Authorization": f"Bearer {token_b}"}).json()[1]
 
     # 3. User B attempts to attach their search to Matter A in Workspace A
-    cross_search_res = client.post("/api/v1/search", json={
-        "raw_claim": "A solid-state battery with silicon composite anode.",
-        "project_id": m_a["id"],  # Belongs to Workspace A!
-    }, headers={"Authorization": f"Bearer {token_b}", "X-Workspace-Id": ws_b["id"]})
+    cross_search_res = client.post(
+        "/api/v1/search",
+        json={
+            "raw_claim": "A solid-state battery with silicon composite anode.",
+            "project_id": m_a["id"],  # Belongs to Workspace A!
+        },
+        headers={"Authorization": f"Bearer {token_b}", "X-Workspace-Id": ws_b["id"]},
+    )
 
     # MUST be rejected with 400 Bad Request or 404 Not Found (kernel RLS hiding foreign matter)
     assert cross_search_res.status_code in [400, 404]
@@ -359,11 +402,14 @@ def test_cross_workspace_relationship_rejection():
 def test_customer_account_lifecycle_and_takeout():
     """Tests password recovery, data takeout export, and cascading account deletion."""
     email = f"inventor_{uuid.uuid4().hex[:6]}@pilot-customer.com"
-    reg = client.post("/api/v1/auth/register", json={
-        "email": email,
-        "full_name": "Dr. Pilot Customer",
-        "password": "InitialPassword123!",
-    })
+    reg = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": email,
+            "full_name": "Dr. Pilot Customer",
+            "password": "InitialPassword123!",
+        },
+    )
     assert reg.status_code == 200
     token = reg.json()["access_token"]
     ws_id = reg.json()["user"]["default_workspace_id"]
@@ -380,10 +426,13 @@ def test_customer_account_lifecycle_and_takeout():
     assert reset_token is not None
 
     # 3. Reset password
-    reset_res = client.post("/api/v1/auth/reset-password", json={
-        "token": reset_token,
-        "new_password": "NewUltraSecurePassword456!",
-    })
+    reset_res = client.post(
+        "/api/v1/auth/reset-password",
+        json={
+            "token": reset_token,
+            "new_password": "NewUltraSecurePassword456!",
+        },
+    )
     assert reset_res.status_code == 200
 
     # 4. Login with old password fails
@@ -417,11 +466,14 @@ def test_platform_admin_support_session_lifecycle():
     """Tests time-limited, logged platform admin support sessions on customer workspaces."""
     # 1. Customer creates a private personal workspace
     client_email = f"client_{uuid.uuid4().hex[:6]}@acme-defense.com"
-    reg = client.post("/api/v1/auth/register", json={
-        "email": client_email,
-        "full_name": "Acme Defense Counsel",
-        "password": "Password123!",
-    })
+    reg = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": client_email,
+            "full_name": "Acme Defense Counsel",
+            "password": "Password123!",
+        },
+    )
     client_ws_id = reg.json()["user"]["default_workspace_id"]
     client_token = reg.json()["access_token"]
     client_headers = {"Authorization": f"Bearer {client_token}", "X-Workspace-Id": client_ws_id}
@@ -430,35 +482,48 @@ def test_platform_admin_support_session_lifecycle():
     matter_id = m["id"]
 
     # 2. Login as Platform Admin (Sarah Jenkins)
-    admin_login = client.post("/api/v1/auth/login", json={
-        "email": "admin@patentsearchengine.com",
-        "password": "patent2026",
-    })
+    admin_login = client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "admin@patentsearchengine.com",
+            "password": "patent2026",
+        },
+    )
     admin_token = admin_login.json()["access_token"]
     admin_headers = {"Authorization": f"Bearer {admin_token}"}
 
     # 3. Admin attempts to probe client's personal workspace WITHOUT support session -> 403 Forbidden
-    unauthorized_probe = client.get(f"/api/v1/matters/{matter_id}", headers={
-        "Authorization": f"Bearer {admin_token}",
-        "X-Workspace-Id": client_ws_id,
-    })
+    unauthorized_probe = client.get(
+        f"/api/v1/matters/{matter_id}",
+        headers={
+            "Authorization": f"Bearer {admin_token}",
+            "X-Workspace-Id": client_ws_id,
+        },
+    )
     assert unauthorized_probe.status_code == 403
 
     # 4. Admin starts logged support session
-    start_session = client.post("/api/v1/admin/support-session/start", json={
-        "workspace_id": client_ws_id,
-        "ticket_reference": "TICKET-SUPPORT-1042",
-        "reason": "Customer reported discrepancy in claim chart generation",
-        "duration_minutes": 30,
-    }, headers=admin_headers)
+    start_session = client.post(
+        "/api/v1/admin/support-session/start",
+        json={
+            "workspace_id": client_ws_id,
+            "ticket_reference": "TICKET-SUPPORT-1042",
+            "reason": "Customer reported discrepancy in claim chart generation",
+            "duration_minutes": 30,
+        },
+        headers=admin_headers,
+    )
     assert start_session.status_code == 200
     session_id = start_session.json()["session_id"]
 
     # 5. Admin can now inspect workspace in SUPPORT_AUDITOR mode
-    authorized_view = client.get(f"/api/v1/matters/{matter_id}", headers={
-        "Authorization": f"Bearer {admin_token}",
-        "X-Workspace-Id": client_ws_id,
-    })
+    authorized_view = client.get(
+        f"/api/v1/matters/{matter_id}",
+        headers={
+            "Authorization": f"Bearer {admin_token}",
+            "X-Workspace-Id": client_ws_id,
+        },
+    )
     assert authorized_view.status_code == 200
     assert authorized_view.json()["name"] == "Confidential Laser Radar Defense"
 
@@ -467,10 +532,13 @@ def test_platform_admin_support_session_lifecycle():
     assert term_res.status_code == 200
 
     # 7. Access is revoked immediately -> 403 Forbidden
-    post_term_probe = client.get(f"/api/v1/matters/{matter_id}", headers={
-        "Authorization": f"Bearer {admin_token}",
-        "X-Workspace-Id": client_ws_id,
-    })
+    post_term_probe = client.get(
+        f"/api/v1/matters/{matter_id}",
+        headers={
+            "Authorization": f"Bearer {admin_token}",
+            "X-Workspace-Id": client_ws_id,
+        },
+    )
     assert post_term_probe.status_code == 403
 
 
@@ -481,15 +549,17 @@ def test_matter_level_ethical_wall_isolation():
     by other firm attorneys unless explicitly enrolled as matter members.
     """
     # 1. Register Partner A (firm administrator)
-    res_a = client.post("/api/v1/auth/register", json={
-        "email": f"partner_a_{uuid.uuid4().hex[:6]}@lawfirm.example.com",
-        "password": "FirmPassword2026!",
-        "full_name": "Partner Alice",
-        "organization_name": "Apex IP Law LLP",
-    })
+    res_a = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": f"partner_a_{uuid.uuid4().hex[:6]}@lawfirm.example.com",
+            "password": "FirmPassword2026!",
+            "full_name": "Partner Alice",
+            "organization_name": "Apex IP Law LLP",
+        },
+    )
     assert res_a.status_code == 200
     token_a = res_a.json()["access_token"]
-    user_a_id = res_a.json()["user"]["id"]
     headers_auth_a = {"Authorization": f"Bearer {token_a}"}
 
     # Retrieve Alice's organization workspace
@@ -501,10 +571,14 @@ def test_matter_level_ethical_wall_isolation():
 
     # 2. Partner A invites Associate Bob to the law firm organization
     bob_email = f"attorney_b_{uuid.uuid4().hex[:6]}@lawfirm.example.com"
-    invite_res = client.post("/api/v1/organization/invite", json={
-        "email": bob_email,
-        "role": "ANALYST",
-    }, headers=headers_a)
+    invite_res = client.post(
+        "/api/v1/organization/invite",
+        json={
+            "email": bob_email,
+            "role": "ANALYST",
+        },
+        headers=headers_a,
+    )
     assert invite_res.status_code == 200
     user_b_id = invite_res.json()["user_id"]
 
@@ -515,15 +589,19 @@ def test_matter_level_ethical_wall_isolation():
     headers_b = {"Authorization": f"Bearer {token_b}", "X-Workspace-Id": ws_firm_id}
 
     # 3. Partner A creates a confidential matter for Client Alphabet
-    create_matter_res = client.post("/api/v1/matters", json={
-        "name": "Project Titan Autonomous Battery",
-        "matter_number": "FIRM-2026-TITAN",
-        "client_name": "Confidential Auto Client",
-        "jurisdiction": "US",
-        "technical_domain": "Solid-State Batteries",
-        "is_confidential": True,
-        "notes": "Strict ethical wall: conflicting automotive representation active.",
-    }, headers=headers_a)
+    create_matter_res = client.post(
+        "/api/v1/matters",
+        json={
+            "name": "Project Titan Autonomous Battery",
+            "matter_number": "FIRM-2026-TITAN",
+            "client_name": "Confidential Auto Client",
+            "jurisdiction": "US",
+            "technical_domain": "Solid-State Batteries",
+            "is_confidential": True,
+            "notes": "Strict ethical wall: conflicting automotive representation active.",
+        },
+        headers=headers_a,
+    )
     assert create_matter_res.status_code == 200
     matter_id = create_matter_res.json()["id"]
 
@@ -538,10 +616,14 @@ def test_matter_level_ethical_wall_isolation():
     assert "Ethical Wall" in b_probe.json()["detail"]
 
     # 6. Partner A adds Attorney B to the matter
-    add_b_to_matter = client.post(f"/api/v1/matters/{matter_id}/members", json={
-        "user_id": user_b_id,
-        "role": "ATTORNEY",
-    }, headers=headers_a)
+    add_b_to_matter = client.post(
+        f"/api/v1/matters/{matter_id}/members",
+        json={
+            "user_id": user_b_id,
+            "role": "ATTORNEY",
+        },
+        headers=headers_a,
+    )
     assert add_b_to_matter.status_code == 200
     assert add_b_to_matter.json()["user_id"] == user_b_id
 
@@ -562,6 +644,3 @@ def test_matter_level_ethical_wall_isolation():
     # 10. Attorney B direct access is immediately barred again -> 403 Forbidden
     b_barred = client.get(f"/api/v1/matters/{matter_id}", headers=headers_b)
     assert b_barred.status_code == 403
-
-
-

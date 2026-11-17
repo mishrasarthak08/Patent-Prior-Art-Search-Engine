@@ -6,15 +6,14 @@ Verifies that:
 """
 
 import os
-import shutil
 import sqlite3
 import subprocess
-import pytest
+
 from backend.app.db.backup_restore import (
-    create_verified_backup,
-    restore_verified_backup,
     create_postgresql_backup,
+    create_verified_backup,
     restore_postgresql_backup,
+    restore_verified_backup,
 )
 
 
@@ -75,4 +74,3 @@ def test_postgresql_backup_and_restore_cycle(tmp_path):
         assert res_restore["projects_count"] >= 30
     finally:
         subprocess.run(["dropdb", "--if-exists", test_db], capture_output=True)
-

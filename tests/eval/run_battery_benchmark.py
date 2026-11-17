@@ -17,14 +17,13 @@ import os
 import time
 from typing import Any
 
+from backend.app.db.models import PatentDocument
+from backend.app.db.session import SessionLocal
 from backend.app.retrieval.bm25_retriever import BM25Retriever
 from backend.app.retrieval.dense_retriever import DenseRetriever
 from backend.app.retrieval.fusion import reciprocal_rank_fusion
-from backend.app.retrieval.reranker import CohereReranker
 from backend.app.retrieval.query_understanding import QueryUnderstandingPipeline
-from backend.app.retrieval.evidence_analyzer import EvidenceAnalyzer
-from backend.app.db.session import SessionLocal
-from backend.app.db.models import PatentDocument
+from backend.app.retrieval.reranker import CohereReranker
 
 
 def compute_ndcg_at_k(retrieved_ids: list[str], gold_ids: set[str], k: int = 10) -> float:
@@ -47,7 +46,7 @@ def compute_mrr(retrieved_ids: list[str], gold_ids: set[str]) -> float:
 
 
 def run_battery_benchmark(dataset_path: str = "eval/battery_benchmark_dataset.json"):
-    with open(dataset_path, "r") as f:
+    with open(dataset_path) as f:
         queries = json.load(f)
 
     print("================================================================================")
@@ -59,7 +58,6 @@ def run_battery_benchmark(dataset_path: str = "eval/battery_benchmark_dataset.js
     dense = DenseRetriever()
     reranker = CohereReranker()
     qu_pipeline = QueryUnderstandingPipeline()
-    evidence_analyzer = EvidenceAnalyzer()
 
     # Preload all patent documents for text lookup
     db = SessionLocal()
@@ -225,7 +223,9 @@ def run_battery_benchmark(dataset_path: str = "eval/battery_benchmark_dataset.js
     # Aggregate and Format Output Table
     # --------------------------------------------------------------------------
     summary = {}
-    print(f"\n{'Strategy':<18} | {'P@5':<6} | {'R@10':<6} | {'R@20':<6} | {'MRR':<6} | {'nDCG@10':<7} | {'ElemRec':<7} | {'QuoAcc':<6} | {'FP-Rate':<7} | {'p50(ms)':<7} | {'p95(ms)':<7} | {'Cost/Q':<7}")
+    print(
+        f"\n{'Strategy':<18} | {'P@5':<6} | {'R@10':<6} | {'R@20':<6} | {'MRR':<6} | {'nDCG@10':<7} | {'ElemRec':<7} | {'QuoAcc':<6} | {'FP-Rate':<7} | {'p50(ms)':<7} | {'p95(ms)':<7} | {'Cost/Q':<7}"
+    )
     print("-" * 125)
 
     for s in strategies:
@@ -260,7 +260,9 @@ def run_battery_benchmark(dataset_path: str = "eval/battery_benchmark_dataset.js
             "cost_per_search_usd": cost,
         }
 
-        print(f"{s:<18} | {mean_p5:<6.3f} | {mean_r10:<6.3f} | {mean_r20:<6.3f} | {mean_mrr:<6.3f} | {mean_ndcg:<7.3f} | {mean_elem:<7.3f} | {mean_ev:<6.3f} | {mean_fp:<7.3f} | {p50:<7.1f} | {p95:<7.1f} | ${cost:<6.4f}")
+        print(
+            f"{s:<18} | {mean_p5:<6.3f} | {mean_r10:<6.3f} | {mean_r20:<6.3f} | {mean_mrr:<6.3f} | {mean_ndcg:<7.3f} | {mean_elem:<7.3f} | {mean_ev:<6.3f} | {mean_fp:<7.3f} | {p50:<7.1f} | {p95:<7.1f} | ${cost:<6.4f}"
+        )
 
     print("=" * 125)
 

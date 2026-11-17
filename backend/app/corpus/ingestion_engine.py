@@ -143,12 +143,9 @@ def get_corpus_coverage_report(db: Session | None = None) -> dict[str, Any]:
                 }
                 for k, v in sorted(cpc_sections.items())
             ],
-            "publication_timeline": [
-                {"year": k, "count": v} for k, v in sorted(publication_years.items())
-            ],
+            "publication_timeline": [{"year": k, "count": v} for k, v in sorted(publication_years.items())],
             "top_assignees": [
-                {"assignee": k, "count": v}
-                for k, v in sorted(assignee_counts.items(), key=lambda x: -x[1])[:10]
+                {"assignee": k, "count": v} for k, v in sorted(assignee_counts.items(), key=lambda x: -x[1])[:10]
             ],
             "provenance_and_licensing": {
                 "source_provenance": "USPTO Bulk Data, EPO Open Patent Services (OPS), and WIPO PCT Gazettes",
@@ -212,12 +209,14 @@ def get_patent_citation_network(doc_id: str, db: Session | None = None) -> dict[
             )
             for fm in family_members:
                 add_node(fm, "family_member")
-                edges.append({
-                    "source": root_doc.id,
-                    "target": fm.id,
-                    "relationship": "SAME_FAMILY",
-                    "label": "Patent Family",
-                })
+                edges.append(
+                    {
+                        "source": root_doc.id,
+                        "target": fm.id,
+                        "relationship": "SAME_FAMILY",
+                        "label": "Patent Family",
+                    }
+                )
 
         # Backward citations (patents cited by root)
         citations = cast(list[str], root_doc.citations or [])
@@ -225,12 +224,14 @@ def get_patent_citation_network(doc_id: str, db: Session | None = None) -> dict[
             cited_doc = db.query(PatentDocument).filter(PatentDocument.id == cited_id).first()
             if cited_doc:
                 add_node(cited_doc, "backward_citation")
-                edges.append({
-                    "source": str(root_doc.id),
-                    "target": str(cited_doc.id),
-                    "relationship": "CITES",
-                    "label": "Backward Citation",
-                })
+                edges.append(
+                    {
+                        "source": str(root_doc.id),
+                        "target": str(cited_doc.id),
+                        "relationship": "CITES",
+                        "label": "Backward Citation",
+                    }
+                )
 
         # Forward citations (patents in corpus that cite root)
         all_docs = db.query(PatentDocument).all()
@@ -238,12 +239,14 @@ def get_patent_citation_network(doc_id: str, db: Session | None = None) -> dict[
             other_citations = cast(list[str], other.citations or [])
             if other.id != root_doc.id and doc_id in other_citations:
                 add_node(other, "forward_citation")
-                edges.append({
-                    "source": str(other.id),
-                    "target": str(root_doc.id),
-                    "relationship": "CITED_BY",
-                    "label": "Forward Citation",
-                })
+                edges.append(
+                    {
+                        "source": str(other.id),
+                        "target": str(root_doc.id),
+                        "relationship": "CITED_BY",
+                        "label": "Forward Citation",
+                    }
+                )
 
         return {
             "root_doc_id": doc_id,

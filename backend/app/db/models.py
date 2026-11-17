@@ -109,7 +109,9 @@ class Project(Base):
     technical_domain = Column(String(100), default="General")
     assigned_to_user_id = Column(String(36), ForeignKey("users.id"), nullable=True)
     created_by_user_id = Column(String(36), ForeignKey("users.id"), nullable=True)
-    is_confidential = Column(Boolean, default=False)  # When True, Ethical Wall is active: strictly restricted to assigned members
+    is_confidential = Column(
+        Boolean, default=False
+    )  # When True, Ethical Wall is active: strictly restricted to assigned members
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
@@ -217,7 +219,9 @@ class EvidenceMapping(Base):
     semantic_similarity = Column(Float, default=0.0)
     document_hash = Column(String(64), nullable=True)
     provenance = Column(JSON, default=dict)
-    reviewer_decision = Column(String(50), default="UNREVIEWED")  # UNREVIEWED, DIRECTLY_SUPPORTING, PARTIALLY_SUPPORTING, CONTEXTUALLY_RELEVANT, INDIRECT_CITATION, HUMAN_VERIFIED, HUMAN_REJECTED
+    reviewer_decision = Column(
+        String(50), default="UNREVIEWED"
+    )  # UNREVIEWED, DIRECTLY_SUPPORTING, PARTIALLY_SUPPORTING, CONTEXTUALLY_RELEVANT, INDIRECT_CITATION, HUMAN_VERIFIED, HUMAN_REJECTED
     attorney_review_status = Column(String(50), default="PENDING")  # PENDING, ACCEPTED, REJECTED, MODIFIED
     attorney_notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
@@ -346,11 +350,12 @@ class QuarantineRecord(Base):
     __tablename__ = "quarantine_records"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
-    entity_type = Column(String(50), nullable=False, index=True)  # project, search_execution, evidence_mapping, annotation
+    entity_type = Column(
+        String(50), nullable=False, index=True
+    )  # project, search_execution, evidence_mapping, annotation
     entity_id = Column(String(36), nullable=False, index=True)
     original_data = Column(JSON, nullable=False)
     reason = Column(String(255), nullable=False)
     quarantined_at = Column(DateTime, default=datetime.datetime.utcnow, index=True)
     reviewed_by = Column(String(36), nullable=True)
     resolution_status = Column(String(50), default="PENDING")  # PENDING, RESTORED, PERMANENTLY_DELETED
-

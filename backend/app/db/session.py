@@ -37,6 +37,7 @@ else:
         engine = temp_engine
     except Exception as exc:
         import logging
+
         logging.getLogger("patent_db").warning(
             f"Configured PostgreSQL unreachable ({exc}). Falling back to embedded SQLite for zero-failure runtime."
         )
@@ -58,6 +59,7 @@ def get_db():
 
 def init_db():
     from backend.app.db.models import Base as ModelsBase
+
     ModelsBase.metadata.create_all(bind=engine)
 
     # In PostgreSQL, automatically apply kernel-level Row Level Security policies
@@ -66,8 +68,9 @@ def init_db():
         if os.path.exists(rls_sql_path):
             try:
                 from sqlalchemy import text
+
                 with engine.begin() as conn:
-                    with open(rls_sql_path, "r", encoding="utf-8") as f:
+                    with open(rls_sql_path, encoding="utf-8") as f:
                         sql_content = f.read()
                     for stmt in sql_content.split(";"):
                         stmt_clean = stmt.strip()

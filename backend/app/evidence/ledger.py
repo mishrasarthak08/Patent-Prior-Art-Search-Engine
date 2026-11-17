@@ -22,7 +22,15 @@ logger = logging.getLogger(__name__)
 
 def compute_document_hash(doc: PatentDocument) -> str:
     """Computes a SHA-256 fingerprint of the patent document text for immutable versioning."""
-    content = (doc.title or "") + "\n" + (doc.abstract or "") + "\n" + (doc.claims_text or "") + "\n" + (doc.description_text or "")
+    content = (
+        (doc.title or "")
+        + "\n"
+        + (doc.abstract or "")
+        + "\n"
+        + (doc.claims_text or "")
+        + "\n"
+        + (doc.description_text or "")
+    )
     return hashlib.sha256(content.encode("utf-8")).hexdigest()[:16]
 
 
@@ -182,7 +190,11 @@ def review_evidence_entry(
 
         old_decision = str(mapping.reviewer_decision or "UNREVIEWED")
         setattr(mapping, "reviewer_decision", decision)
-        setattr(mapping, "attorney_review_status", "ACCEPTED" if decision in ("HUMAN_VERIFIED", "DIRECTLY_SUPPORTING") else "REJECTED")
+        setattr(
+            mapping,
+            "attorney_review_status",
+            "ACCEPTED" if decision in ("HUMAN_VERIFIED", "DIRECTLY_SUPPORTING") else "REJECTED",
+        )
         if notes:
             setattr(mapping, "attorney_notes", notes)
 

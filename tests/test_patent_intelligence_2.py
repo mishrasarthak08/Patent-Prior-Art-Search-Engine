@@ -1,5 +1,5 @@
-import pytest
 from fastapi.testclient import TestClient
+
 from backend.app.main import app
 
 client = TestClient(app)
@@ -73,7 +73,7 @@ def test_evidence_ledger_and_review():
         target_id = items2[0]["id"]
         review_payload = {
             "decision": "HUMAN_VERIFIED",
-            "notes": "Verified against specification paragraph [0022] by IP counsel."
+            "notes": "Verified against specification paragraph [0022] by IP counsel.",
         }
         rev_resp = client.post(f"/api/v1/evidence-ledger/{target_id}/review", json=review_payload, headers=AUTH_HEADERS)
         assert rev_resp.status_code == 200
@@ -85,10 +85,7 @@ def test_evidence_ledger_and_review():
 def test_multi_claim_mapping_matrix():
     """Verify Multi-Document Claim Mapping Matrix (comparing 1 claim against multiple patents)."""
     claim = "A battery comprising a cathode of NMC and an anode of silicon nanoparticles in carbon."
-    payload = {
-        "raw_claim": claim,
-        "doc_ids": ["US10892482B2", "US10454101B2", "EP3890123A1"]
-    }
+    payload = {"raw_claim": claim, "doc_ids": ["US10892482B2", "US10454101B2", "EP3890123A1"]}
     resp = client.post("/api/v1/patents/multi-claim-map", json=payload, headers=AUTH_HEADERS)
     assert resp.status_code == 200
     data = resp.json()

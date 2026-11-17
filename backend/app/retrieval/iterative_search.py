@@ -106,11 +106,13 @@ class IterativeSearchEngine:
                 if "bm25_full_claim" not in doc.retrieval_sources:
                     doc.retrieval_sources.append("bm25_full_claim")
             retrieved_pools.append(bm25_primary)
-            strategy_provenance.append({
-                "strategy": "BM25_FULL_CLAIM",
-                "query": full_claim_text[:120] + "...",
-                "candidate_count": len(bm25_primary),
-            })
+            strategy_provenance.append(
+                {
+                    "strategy": "BM25_FULL_CLAIM",
+                    "query": full_claim_text[:120] + "...",
+                    "candidate_count": len(bm25_primary),
+                }
+            )
 
             # -------------------------------------------------------------
             # Strategy 2: Limitation-Specific Targeted BM25 Search
@@ -126,11 +128,13 @@ class IterativeSearchEngine:
                 limitation_results.extend(elem_docs)
 
             retrieved_pools.append(limitation_results)
-            strategy_provenance.append({
-                "strategy": "LIMITATION_SUBQUERIES",
-                "subqueries_count": len(decomposed_claim.elements),
-                "candidate_count": len(limitation_results),
-            })
+            strategy_provenance.append(
+                {
+                    "strategy": "LIMITATION_SUBQUERIES",
+                    "subqueries_count": len(decomposed_claim.elements),
+                    "candidate_count": len(limitation_results),
+                }
+            )
 
             # -------------------------------------------------------------
             # Strategy 3: Synonym & Terminology Expansion Search
@@ -143,11 +147,13 @@ class IterativeSearchEngine:
                     if "synonym_expansion" not in d.retrieval_sources:
                         d.retrieval_sources.append("synonym_expansion")
                 retrieved_pools.append(expansion_docs)
-                strategy_provenance.append({
-                    "strategy": "SYNONYM_EXPANSION",
-                    "expanded_terms": expanded_terms[:6],
-                    "candidate_count": len(expansion_docs),
-                })
+                strategy_provenance.append(
+                    {
+                        "strategy": "SYNONYM_EXPANSION",
+                        "expanded_terms": expanded_terms[:6],
+                        "candidate_count": len(expansion_docs),
+                    }
+                )
 
             # -------------------------------------------------------------
             # Strategy 4: Dense Vector / HyDE Retrieval
@@ -163,10 +169,12 @@ class IterativeSearchEngine:
 
             if dense_docs:
                 retrieved_pools.append(dense_docs)
-                strategy_provenance.append({
-                    "strategy": "DENSE_HYDE_VECTOR",
-                    "candidate_count": len(dense_docs),
-                })
+                strategy_provenance.append(
+                    {
+                        "strategy": "DENSE_HYDE_VECTOR",
+                        "candidate_count": len(dense_docs),
+                    }
+                )
 
             # Fuse primary candidate pools
             fused_candidates = reciprocal_rank_fusion(retrieved_pools)
@@ -188,14 +196,20 @@ class IterativeSearchEngine:
                     doc_obj = db.query(PatentDocument).filter(PatentDocument.id == cand.doc_id).first()
                     if not doc_obj:
                         continue
-                    full_doc_text = str(doc_obj.title or "") + "\n" + str(doc_obj.abstract or "") + "\n" + str(doc_obj.description_text or "")
+                    full_doc_text = (
+                        str(doc_obj.title or "")
+                        + "\n"
+                        + str(doc_obj.abstract or "")
+                        + "\n"
+                        + str(doc_obj.description_text or "")
+                    )
                     em = self.evidence_analyzer.analyze_limitation(element.text, full_doc_text)
                     if em.confidence_score > best_confidence:
                         best_confidence = em.confidence_score
                         best_support = em.support_level
                         best_doc = cand.doc_id
 
-                is_gap = (best_support == "NOT_FOUND" or best_confidence < 0.65)
+                is_gap = best_support == "NOT_FOUND" or best_confidence < 0.65
                 gap_info = {
                     "element_id": element.element_id,
                     "limitation_text": element.text,
@@ -242,20 +256,24 @@ class IterativeSearchEngine:
                             lg["resolved_by_doc_id"] = follow_docs[0].doc_id
                             lg["final_support"] = "PARTIALLY_SUPPORTED"
 
-                follow_up_log.append({
-                    "element_id": gap_element.element_id,
-                    "dispatched_query": follow_query[:100] + "...",
-                    "hits_found": len(follow_docs),
-                    "top_match_id": follow_docs[0].doc_id if follow_docs else None,
-                })
+                follow_up_log.append(
+                    {
+                        "element_id": gap_element.element_id,
+                        "dispatched_query": follow_query[:100] + "...",
+                        "hits_found": len(follow_docs),
+                        "top_match_id": follow_docs[0].doc_id if follow_docs else None,
+                    }
+                )
 
             if follow_up_results:
                 retrieved_pools.append(follow_up_results)
-                strategy_provenance.append({
-                    "strategy": "GAP_TARGETED_ITERATIVE",
-                    "gaps_addressed": len(gaps_detected),
-                    "candidate_count": len(follow_up_results),
-                })
+                strategy_provenance.append(
+                    {
+                        "strategy": "GAP_TARGETED_ITERATIVE",
+                        "gaps_addressed": len(gaps_detected),
+                        "candidate_count": len(follow_up_results),
+                    }
+                )
 
             # -------------------------------------------------------------
             # Strategy 7: Citation Graph & Patent Family Expansion
@@ -312,7 +330,9 @@ class IterativeSearchEngine:
                                 snippet=str(cited_doc.abstract or "")[:300],
                                 abstract=str(cited_doc.abstract) if cited_doc.abstract else None,
                                 assignee=str(cited_doc.assignee) if cited_doc.assignee else None,
-                                publication_date=str(cited_doc.publication_date) if cited_doc.publication_date else None,
+                                publication_date=str(cited_doc.publication_date)
+                                if cited_doc.publication_date
+                                else None,
                                 family_id=str(cited_doc.family_id) if cited_doc.family_id else None,
                                 cpc_codes=cd_cpc,
                                 retrieval_sources=["citation_graph_expansion"],
@@ -324,12 +344,14 @@ class IterativeSearchEngine:
 
             if graph_expansion_docs:
                 retrieved_pools.append(graph_expansion_docs)
-                strategy_provenance.append({
-                    "strategy": "GRAPH_FAMILY_EXPANSION",
-                    "citation_leads_count": len(citation_leads),
-                    "family_leads_count": len(family_leads),
-                    "candidate_count": len(graph_expansion_docs),
-                })
+                strategy_provenance.append(
+                    {
+                        "strategy": "GRAPH_FAMILY_EXPANSION",
+                        "citation_leads_count": len(citation_leads),
+                        "family_leads_count": len(family_leads),
+                        "candidate_count": len(graph_expansion_docs),
+                    }
+                )
 
             # Final RRF merge
             all_fused = reciprocal_rank_fusion(retrieved_pools)
@@ -345,7 +367,9 @@ class IterativeSearchEngine:
                 "gap_summary": {
                     "total_limitations": len(decomposed_claim.elements),
                     "gaps_detected": len(gaps_detected),
-                    "gaps_resolved": sum(1 for g in limitation_gaps if g["follow_up_dispatched"] and g["resolved_by_doc_id"]),
+                    "gaps_resolved": sum(
+                        1 for g in limitation_gaps if g["follow_up_dispatched"] and g["resolved_by_doc_id"]
+                    ),
                 },
                 "strategy_provenance": strategy_provenance,
                 "follow_up_queries": follow_up_log,

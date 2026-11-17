@@ -122,7 +122,7 @@ class FileSpoolEmailBackend:
         for fname in files:
             if not fname.endswith(".json"):
                 continue
-            with open(os.path.join(self.spool_dir, fname), "r") as f:
+            with open(os.path.join(self.spool_dir, fname)) as f:
                 data = json.load(f)
                 if not to_email or data.get("to_email") == to_email.lower().strip():
                     return data
@@ -180,9 +180,7 @@ class EmailService:
         )
         return self.backend.send(msg)
 
-    def send_workspace_invitation_email(
-        self, to_email: str, inviter_name: str, workspace_name: str, role: str
-    ) -> bool:
+    def send_workspace_invitation_email(self, to_email: str, inviter_name: str, workspace_name: str, role: str) -> bool:
         """Sends an invitation to join an organization research workspace."""
         frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:3001")
         join_link = f"{frontend_url}/login"
@@ -205,4 +203,3 @@ class EmailService:
 
 
 email_service = EmailService()
-

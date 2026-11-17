@@ -3,10 +3,9 @@ Robust Data Migration Script: SQLite -> PostgreSQL
 Transfers all historical entities while respecting foreign keys, constraints, and types.
 """
 
-import json
 import sqlite3
-import sys
 from datetime import datetime
+
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
@@ -19,6 +18,7 @@ BOOL_COLS = {
     "support_sessions": ["is_active"],
     "evidence_mappings": ["verified", "literal_match"],
 }
+
 
 def migrate():
     print(f"Connecting to SQLite: {SQLITE_PATH}")
@@ -106,6 +106,7 @@ def migrate():
     finally:
         sqlite_conn.close()
         pg_session.close()
+
 
 if __name__ == "__main__":
     migrate()

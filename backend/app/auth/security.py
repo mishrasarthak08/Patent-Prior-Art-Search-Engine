@@ -192,6 +192,7 @@ def set_database_tenant_context(db: Session, workspace_id: str, is_admin: bool =
         bind = db.get_bind()
         if bind and bind.dialect.name == "postgresql":
             from sqlalchemy import text
+
             admin_str = "true" if is_admin else "false"
             db.execute(text("SELECT set_config('app.current_workspace_id', :ws_id, false);"), {"ws_id": workspace_id})
             db.execute(text("SELECT set_config('app.is_platform_admin', :is_admin, false);"), {"is_admin": admin_str})
@@ -207,7 +208,7 @@ def get_active_workspace(
     """
     Enforces multi-tenant workspace isolation with strict deny-by-default authorization.
     Resolves the requested workspace and verifies that the calling user has verified access.
-    
+
     Security Guarantees:
     - Explicitly invalid workspace IDs return HTTP 404 immediately (NEVER silent fallback).
     - Unauthorized workspace IDs return HTTP 403 Forbidden.
@@ -367,7 +368,7 @@ def create_support_session(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only platform administrators can initiate support sessions",
         )
-    
+
     duration = min(max(duration_minutes, 5), 120)  # Between 5 mins and 2 hours
     expires_at = datetime.utcnow() + timedelta(minutes=duration)
 
@@ -418,7 +419,7 @@ def terminate_support_session(
     session = db.query(SupportSession).filter(SupportSession.id == session_id).first()
     if not session:
         raise HTTPException(status_code=404, detail="Support session not found")
-    
+
     if session.admin_user_id != admin.id and not getattr(admin, "is_platform_admin", False):
         raise HTTPException(status_code=403, detail="Cannot terminate another administrator's support session")
 
@@ -536,15 +537,13 @@ def ensure_seed_users_and_orgs(db: Session) -> None:
     # Ensure admin membership in ws-energy-semi
     for u in [admin_user, legacy_admin]:
         if u:
-            m = db.query(WorkspaceMembership).filter(
-                WorkspaceMembership.workspace_id == "ws-energy-semi",
-                WorkspaceMembership.user_id == u.id
-            ).first()
+            m = (
+                db.query(WorkspaceMembership)
+                .filter(WorkspaceMembership.workspace_id == "ws-energy-semi", WorkspaceMembership.user_id == u.id)
+                .first()
+            )
             if not m:
-                db.add(WorkspaceMembership(
-                    id=str(uuid.uuid4()),
-                    workspace_id="ws-energy-semi",
-                    user_id=u.id,
-                    role="OWNER"
-                ))
+                db.add(
+                    WorkspaceMembership(id=str(uuid.uuid4()), workspace_id="ws-energy-semi", user_id=u.id, role="OWNER")
+                )
     db.commit()

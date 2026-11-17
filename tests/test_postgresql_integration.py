@@ -6,22 +6,21 @@ and RBAC enforcement against a real PostgreSQL instance.
 
 import concurrent.futures
 import uuid
+
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from backend.app.auth.security import get_effective_workspace_role, get_password_hash
 from backend.app.db.models import (
     Base,
     Organization,
-    PatentDocument,
     Project,
-    SearchExecution,
     SupportSession,
     User,
     Workspace,
     WorkspaceMembership,
 )
-from backend.app.auth.security import get_password_hash, get_effective_workspace_role
 
 PG_URL = "postgresql://localhost/patent_platform_pg"
 
@@ -114,7 +113,6 @@ def test_postgresql_multi_tenant_schema_and_seeding(pg_session_factory):
 def test_postgresql_concurrent_workspace_operations(pg_session_factory):
     """Tests high-concurrency operations across multiple distinct workspaces on PostgreSQL."""
     num_workers = 8
-    created_matter_ids = []
 
     def create_tenant_matter(worker_idx):
         db = pg_session_factory()
@@ -215,6 +213,7 @@ def test_postgresql_cross_tenant_isolation_and_support_session(pg_session_factor
 
         # 3. Create time-limited Support Session for Admin
         from datetime import datetime, timedelta
+
         support = SupportSession(
             id=str(uuid.uuid4()),
             admin_user_id=admin.id,

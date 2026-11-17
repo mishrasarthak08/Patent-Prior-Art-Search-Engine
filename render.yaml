@@ -48,3 +48,4 @@ databases:
     user: patent_app_user
     region: oregon
     plan: free
+    postgresMajorVersion: "16"

@@ -38,14 +38,13 @@ __pycache__/
 env/
 venv/
 .venv/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
+# Python build directories
+/build/
+/dist/
+/lib/
+/lib64/
+!frontend/src/lib/
+!frontend/src/lib/**
 parts/
 sdist/
 var/

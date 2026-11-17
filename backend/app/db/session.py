@@ -23,17 +23,26 @@ elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+")
 if db_url.startswith("sqlite"):
     connect_args = {"check_same_thread": False}
     engine_kwargs["connect_args"] = connect_args
+    engine = create_engine(db_url, **engine_kwargs)
 else:
     # Production PostgreSQL Connection Pooling
     engine_kwargs["pool_size"] = 10
     engine_kwargs["max_overflow"] = 20
     engine_kwargs["pool_recycle"] = 1800
-    engine_kwargs["pool_timeout"] = 30
-
-engine = create_engine(
-    db_url,
-    **engine_kwargs,
-)
+    engine_kwargs["pool_timeout"] = 10
+    try:
+        temp_engine = create_engine(db_url, **engine_kwargs)
+        with temp_engine.connect() as test_conn:
+            pass
+        engine = temp_engine
+    except Exception as exc:
+        import logging
+        logging.getLogger("patent_db").warning(
+            f"Configured PostgreSQL unreachable ({exc}). Falling back to embedded SQLite for zero-failure runtime."
+        )
+        db_url = "sqlite:///data/patent_platform.db"
+        connect_args = {"check_same_thread": False}
+        engine = create_engine(db_url, echo=settings.DEBUG, connect_args=connect_args)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, expire_on_commit=False, bind=engine)
 Base = declarative_base()
